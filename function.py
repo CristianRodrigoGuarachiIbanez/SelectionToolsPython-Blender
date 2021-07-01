@@ -8,23 +8,28 @@ visited: List[bool] = [False] * len(graph)
 print(visited)
 queue: List[BMEdge] =[selectedEdges[0]]
 print(queue)
-visited[0] = True;
 currEdge: BMEdge
+nextEdge: BMEdge
 currVertex: BMVert
+edgeLength:float
 angle:float
 i: int = 0;
 while(len(queue)>0):
-    currEdge= queue.pop(0)
-    vertexIndex = currEdge.index
-    #if(
-    currVertex = vertices[i]
+    currEdge= queue.pop(0);
+    edgeLength = currEdge.calc_length();
+    currVertex = vertices[i];
+    print('current Edge: {}, edge length: {}, current vertices: {}'.format(currEdge, edgeLength, currVertex))
+    if (visited[i] is True):
+        print('index i:{}, edge: {}'.format(i, self.__graph[currVertex][i]));
+        continue;
     print(len(graph[currVertex]))
     for j in range(len(graph[currVertex])): 
-        
-        #if(visited[i]):
-        #    continue
-        angle = edgeAngle(currEdge, graph[currVertex][j])
-        print('index i: {}, index j {}, angle: {}'.format(i, j, angle))
+        nextEdge = self.__graph[currVertex][i];
+        angle = self.__edgeAngle(currEdge, nextEdge);
+        print('index i: {}, index j: {}, angle value: {}'.format(i, j, angle));
+        if(edgeLength == nextEdge.calc_length()):
+            print('current edge length: {}, next edge length: {}'.format(edgeLength, nextEdge.calc_length()));
+    visited[i] = True;
     i+=1
 
 
