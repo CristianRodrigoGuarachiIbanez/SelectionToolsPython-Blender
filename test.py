@@ -10,6 +10,7 @@ from bmesh import from_edit_mesh
 from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, DefaultDict
 from collections import defaultdict
 from mathutils import Vector
+from math import pi
 from os.path import dirname, join, expanduser, normpath, realpath
 from os import getcwd
 import sys
@@ -32,6 +33,10 @@ class SelectionModesManager(Operator):
     def addEdges(self, key: BMVert, values: List[BMEdge]) -> None:
         self.__graph[key].append(values);
 
+    def deleteEdges(self) -> None:
+        self.__graph.clear()
+
+
     def generateVertices(self) -> Generator:
         v1: BMVert
         v2: BMVert
@@ -48,38 +53,55 @@ class SelectionModesManager(Operator):
         c:Vector = edge2.other_vert(b).co - b.co
         return a.angle(c);
 
-    def __getNextEdges(self, edge: BMEdge) -> None:
+    def __getNextEdges(self, edge: BMEdge) -> List[BMVert]:
+        self.deleteEdges()
         currVertex: BMVert
         vertexIndex: int
         nextEdges: BMElemSeq[BMEdge]
-        self.__vertices: List[BMVert] = [vert for vert in edge.verts]
-        for i in range(len(self.__vertices)):
-            currVertex = self.__vertices.pop()
+        vertices: List[BMVert] = [vert for vert in edge.verts]
+        output: List[BMVert] = vertices.copy()
+        i: int
+        j: int
+        for i in range(len(vertices)):
+            currVertex = vertices.pop()
             nextEdges = currVertex.link_edges # <BMElemSeq object at 0x7fd9d5c99780>
-            for i in range(len(nextEdges)):
-                self.addEdges(currVertex, nextEdges[i])
+            print('next edges length: {}'.format(len(nextEdges)));
+            for j in range(len(nextEdges)):
+                print('current vertex: {}, next edge: {}, next edge index: {}'.format(currVertex, nextEdges[j], nextEdges[j].index));
+                self.addEdges(currVertex, nextEdges[j])
+        return output;
 
     def generateEdgeSequences(self, start: int) -> Generator:
-        self.__getNextEdges(self.__selectedEdges[0])
+        vertices: List[BMVert] = self.__getNextEdges(self.__selectedEdges[0])
         visited: List[bool] = [False] * len(self.__graph)
         queue: List[BMEdge] =[self.__selectedEdges[0]]
-        visited[0] = True;
+        #visited[0] = True;
         currEdge: BMEdge
+        nextEdge: BMEdge
         currVertex: BMVert
+        edgeLength:float
         angle:float
         i: int = 0;
         while(len(queue)>0):
-            currEdge= queue.pop()
-            vertexIndex = currEdge.index
-            currVertex = self.__vertices[i]
-            for i in range(len(self.__graph[currVertex])):
-                if(visited[i]):
-                    continue
-                angle = self.__edgeAngle(currEdge, self.__graph[currVertex][i])
-                print(angle)
-                i+=1
-                #if(angle<2.0):
-                    #queue.append(self.__graph[currVertex][i])
+            currEdge= queue.pop(0);
+            edgeLength = currEdge.calc_length();
+            currVertex = vertices[i];
+            print('current Edge: {}, edge length: {}, current vertices: {}'.format(currEdge, edgeLength, currVertex))
+            if (visited[i] is True):
+                print('index i:{}, edge: {}'.format(i, self.__graph[currVertex][i]));
+                continue;
+            for j in range(len(self.__graph[currVertex])):
+
+                nextEdge = self.__graph[currVertex][j];
+                angle = self.__edgeAngle(currEdge, nextEdge)/pi;
+                print('index i: {}, index j: {}, edge index: {}, angle value: {}'.format(i, j, nextEdge.index, angle));
+                if(edgeLength == nextEdge.calc_length()):
+                    print('current edge length: {}, next edge length: {}'.format(edgeLength, nextEdge.calc_length()));
+
+                visited[i] = True;
+            i+=1;
+
+
 
 
 
