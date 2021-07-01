@@ -49,7 +49,7 @@ def edgeAngle(edge1: BMEdge, edge2: BMEdge) -> float:
     c:Vector = edge2.other_vert(b).co - b.co
     return a.angle(c);
 
-def addEdges( key: BMVert, values: BMElemSeq[BMEdge]) -> None:
+def addEdges( key: BMVert, values: List[BMEdge]) -> None:
         graph[key].append(values);
 
 
