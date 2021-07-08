@@ -10,11 +10,13 @@ from bmesh import from_edit_mesh
 from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, DefaultDict
 from collections import defaultdict
 from mathutils import Vector
+from logging import info, INFO
 from math import pi
 from os.path import dirname, join, expanduser, normpath, realpath
 from os import getcwd
 import sys
 import bpy
+
 
 class SelectionModesManager(Operator):
     bl_idname: str = 'mesh.text';
@@ -45,7 +47,8 @@ class SelectionModesManager(Operator):
         for i in range(length):
             v1, v2 = self.__selectedEdges[i].verts
             yield v1, v2;
-
+    def calculateFacesAngle(self) -> None:
+        pass
     @staticmethod
     def edgeAngle(edge1: BMEdge, edge2: BMEdge) -> float:
         b:BMVert = set(edge1.verts).intersection(edge2.verts).pop()
@@ -71,40 +74,51 @@ class SelectionModesManager(Operator):
                 self.addEdges(currVertex, nextEdges[j])
         return output;
 
-    def generateEdgeSequences(self, start: int) -> Generator:
-        vertices: List[BMVert] = self.__getNextEdges(self.__selectedEdges[0])
-        visited: List[bool] = [False] * len(self.__graph)
-        queue: List[BMEdge] =[self.__selectedEdges[0]]
-        #visited[0] = True;
+    def __selectNextEdge(self, start: int) -> None:
+        """
+        iterate over the graph excluding the edges that not meet the two criteria
+        :param start:
+        :return: return a
+        """
+        vertices: List[BMVert] = self.__getNextEdges(self.__selectedEdges[start])
+        limitS:float = 5.2
+        limitIn1:float = 5.0
+        limitIn2:float = 5.0
+        limitI:Tuple[float, bool]
         currEdge: BMEdge
         nextEdge: BMEdge
         currVertex: BMVert
         edgeLength:float
         angle:float
+        limits:bool;
         i: int = 0;
-        while(len(queue)>0):
-            currEdge= queue.pop(0);
+        while(len(vertices)>0):
+            currEdge= self.__selectedEdges[start]#queue.pop(0);
             edgeLength = currEdge.calc_length();
-            currVertex = vertices[i];
-            print('current Edge: {}, edge length: {}, current vertices: {}'.format(currEdge, edgeLength, currVertex))
-            if (visited[i] is True):
-                print('index i:{}, edge: {}'.format(i, self.__graph[currVertex][i]));
-                continue;
+            currVertex = vertices.pop(0) #vertices[i];
+            info('current Edge: {}, current vertices: {}, current vertices index: {}'.format( currEdge, currVertex, currVertex.index))
+            limitI = (limitIn1,True) if((i + 1) % 2 == 0) else (limitIn2,False)
             for j in range(len(self.__graph[currVertex])):
-
-                nextEdge = self.__graph[currVertex][j];
-                angle = self.__edgeAngle(currEdge, nextEdge)/pi;
-                print('index i: {}, index j: {}, edge index: {}, angle value: {}'.format(i, j, nextEdge.index, angle));
-                if(edgeLength == nextEdge.calc_length()):
-                    print('current edge length: {}, next edge length: {}'.format(edgeLength, nextEdge.calc_length()));
-
-                visited[i] = True;
-            i+=1;
-
-
-
-
-
+                nextEdge = self.__graph[currVertex][j]; # self.__graph[currVertex].pop(0)
+                angle = (self.__edgeAngle(currEdge, nextEdge)*180)/pi;
+                limits = limitI[0]<angle<limitS
+                info('index i: {}, index j: {}, edge index: {}, angle value: {}'.format(i, j, nextEdge.index, angle));
+                if(limits and (edgeLength == nextEdge.calc_length())):
+                    pass
+                    info('current edge length: {}, next edge length: {}'.format(edgeLength, nextEdge.calc_length()));
+                else:
+                    self.__graph[currVertex].remove(nextEdge);
+            i += 1;
+            if(len(self.__graph[currVertex]) > 1):
+                vertices.append(currVertex);
+                limitI[0] += 0.1 ;
+                limitIn1 = limitI[0] if(limitI[1]) else limitIn1;
+                limitIn2 = limitI[0] if(limitI[1] is False) else limitIn2
+            elif(len(self.__graph[currVertex])==1):
+                self.__selectedEdges.append(nextEdge)
+            else:
+                #len is 0
+                pass
 
     def __gatherElementSequences(self) -> None:
 
@@ -130,6 +144,21 @@ class SelectionModesManager(Operator):
         assert(length>=0), 'the length of the BMEdges List is empty';
         for i in range(length):
             self.__selectedFaces.append(self.__selectedEdges[i].link_faces);
+
+    def __constructEdgePath(self) -> List[BMEdge]:
+
+        start: int;
+        visited: List[bool] = [False] * len(self.__graph)
+        queue: BMEdge; # =[self.__selectedEdges[0]]
+        visited[0] = True;
+        i:int =0;
+        while(len(self.__selectedEdges)>0):
+            queue = self.__selectedEdges.pop(0)
+            #select the next edge
+            self.__selectNextEdge(i)
+            print('two new edges ware selected!')
+
+
 
     def execute(self, context) -> Set[str]:
         self.__selectedEdges.clear();
