@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-from bpy.types import Panel
+
 from bpy.props import StringProperty
 
 from bmesh.types import BMElemSeq, BMEdgeSeq, BMFaceSeq, BMVertSeq
 from bmesh.types import BMVert, BMEdge, BMFace, BMesh, BMLoop
 from bpy import context
-from bpy.types import Object, Operator
-from bmesh import from_edit_mesh
+from bpy.types import Object, Operator, Panel, ID
+from bmesh import from_edit_mesh, update_edit_mesh
 from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, DefaultDict
 from collections import defaultdict
 from mathutils import Vector
@@ -24,6 +24,7 @@ class SelectionModesManager(Operator):
     bl_options: Set[str] = {'REGISTER', 'UNDO'};
     def __init__(self) -> None:
         self.__obj: Object = context.object;
+        self.__bm: BMesh;
         self.__selectedEdges: List[BMEdgeSeq] = list();
         #self.__selectedFaces: List[BMElemSeq] = list(); # save the faces
         self.__graph: DefaultDict[BMVert, List[BMEdge]] = defaultdict(list);
@@ -35,20 +36,30 @@ class SelectionModesManager(Operator):
     def addEdges(self, key: BMVert, values: List[BMEdge]) -> None:
         self.__graph[key].append(values);
 
-    def deleteEdges(self) -> None:
+    def deleteAllEdges(self) -> None:
         self.__graph.clear()
 
-
-    def generateVertices(self) -> Generator:
-        v1: BMVert
-        v2: BMVert
-        length: int = len(self.__selectedEdges)
-        assert (length > 0), 'there is NONE active vertices';
-        for i in range(length):
-            v1, v2 = self.__selectedEdges[i].verts
-            yield v1, v2;
     def calculateFacesAngle(self) -> None:
         pass
+
+    def __gatherElementSequences(self) -> None:
+
+        #bm: BMesh
+        length: int;
+        if (self.__obj.mode == 'EDIT'):
+            self.__bm = from_edit_mesh(self.__obj.data)
+            length = len(self.__bm.edges)
+            # print(length)
+            # for i, v in enumerate(bm.verts):
+            assert(length <=3), "there could be more than 3 Edges selected"
+            for i in range(length):
+                # print('Nicht selected edges: {}'.format(bm.edges[i]))
+                if (self.__bm.edges[i].select):
+                    print('selected edges: {}'.format(self.__bm.edges[i]))
+                    self.__selectedEdges.append(self.__bm.edges[i])
+        else:
+            print("Object is not in edit mode.")
+
     @staticmethod
     def edgeAngle(edge1: BMEdge, edge2: BMEdge) -> float:
         b:BMVert = set(edge1.verts).intersection(edge2.verts).pop()
@@ -74,13 +85,13 @@ class SelectionModesManager(Operator):
                 self.addEdges(currVertex, nextEdges[j])
         return output;
 
-    def __selectNextEdge(self, start: int) -> None:
+    def __selectNextEdge(self, EDGE: BMEdge) -> None:
         """
         iterate over the graph excluding the edges that not meet the two criteria
         :param start:
         :return: return a
         """
-        vertices: List[BMVert] = self.__getNextEdges(self.__selectedEdges[start])
+        vertices: List[BMVert] = self.__getNextEdges(EDGE)
         limitS:float = 5.2
         limitIn1:float = 5.0
         limitIn2:float = 5.0
@@ -93,7 +104,7 @@ class SelectionModesManager(Operator):
         limits:bool;
         i: int = 0;
         while(len(vertices)>0):
-            currEdge= self.__selectedEdges[start]#queue.pop(0);
+            currEdge= EDGE#queue.pop(0);
             edgeLength = currEdge.calc_length();
             currVertex = vertices.pop(0) #vertices[i];
             info('current Edge: {}, current vertices: {}, current vertices index: {}'.format( currEdge, currVertex, currVertex.index))
@@ -120,44 +131,50 @@ class SelectionModesManager(Operator):
                 #len is 0
                 pass
 
-    def __gatherElementSequences(self) -> None:
-
-        bm: BMesh
-        length: int
-        if (self.__obj.mode == 'EDIT'):
-            bm = from_edit_mesh(self.__obj.data)
-            length = len(bm.edges)
-            # print(length)
-            # for i, v in enumerate(bm.verts):
-            assert(length <=3), "there could be more than 3 Edges selected"
-            for i in range(length):
-                # print('Nicht selected edges: {}'.format(bm.edges[i]))
-                if (bm.edges[i].select):
-                    print('selected edges: {}'.format(bm.edges[i]))
-                    self.__selectedEdges.append(bm.edges[i])
-        else:
-            print("Object is not in edit mode.")
-
-    def __collectSurroundingEdges(self) -> None:
-        edges: List[BMEdgeSeq] = self.getEdges()
-        length: int = len(edges)
-        assert(length>=0), 'the length of the BMEdges List is empty';
-        for i in range(length):
-            self.__selectedFaces.append(self.__selectedEdges[i].link_faces);
+    def __excludeDuplicates(self) -> List[BMEdge]:
+        i:int;
+        currIndex:int
+        indices:List[BMEdge] = list();
+        if (len(self.__selectedEdges)==1):
+            return list(self.__selectedEdges[0].index)
+        elif(len(self.__selectedEdges)<1):
+            print('the list ist empty')
+        for i in range(len(self.__selectedEdges)):
+            indices.append(self.__selectedEdges[i].index) # saves the indices
+        return list(set(indices)) # removes the duplicates
 
     def __constructEdgePath(self) -> List[BMEdge]:
 
-        start: int;
-        visited: List[bool] = [False] * len(self.__graph)
-        queue: BMEdge; # =[self.__selectedEdges[0]]
-        visited[0] = True;
-        i:int =0;
-        while(len(self.__selectedEdges)>0):
-            queue = self.__selectedEdges.pop(0)
+        start: int = 0;
+        visited: List[int] = self.__excludeDuplicates() #[False] * len(self.__selectedEdges)
+        queue: BMEdge;
+        currEdge:BMEdge;
+        while(len(self.__selectedEdges)>0): # endlose Schleife
+            queue = self.__selectedEdges[start]
+            if(visited[start] == queue.index):
+                start+=1;
+                continue;
             #select the next edge
-            self.__selectNextEdge(i)
-            print('two new edges ware selected!')
+            self.__selectNextEdge(queue)
+            print('two new edges ware selected and added!');
+            visited = self.__excludeDuplicates()
+            start+=1;
 
+        return self.__selectedEdges
+
+    def __activeEdgesEDITMODE(self, edges:List[BMEdge]) -> None:
+        #bm: BMesh = from_edit_mesh(self.__obj.data);
+        i:int;
+        currEdge:BMEdge;
+
+        for i in range(len(edges)):
+            currEdge = edges[i];
+            currEdge.select=True;
+
+        self.__bm.select_history.clear()
+        self.__bm.select_history.add(currEdge)
+
+        update_edit_mesh(self.__obj.data)
 
 
     def execute(self, context) -> Set[str]:
