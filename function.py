@@ -56,11 +56,13 @@ def __getNextEdges(edge: BMEdge) -> List[BMVert]:
     for i in range(len(vertices)):
         currVertex = vertices.pop()
         nextEdges = currVertex.link_edges  # <BMElemSeq object at 0x7fd9d5c99780>
-        print('next edges length: {}, vertices length: {}'.format(len(nextEdges), len(vertices)));
+        print('number of next edges: {}, number of vertices: {}'.format(len(nextEdges), len(vertices)));
         for j in range(len(nextEdges)):
-            print('current vertex: {}, next edge: {}, next edge index: {}'.format(currVertex, nextEdges[j],
-                                                                                  nextEdges[j].index));
-            addEdges(currVertex, nextEdges[j])
+            print('CURRENT EDGE {}, CURRENT VERTEX:{}, NEXT EDGE: {}, NEXT EDGE INDEX: {}'.format(edge, currVertex, nextEdges[j], nextEdges[j].index));
+            if(edge.index == nextEdges[j].index):
+                print(nextEdges)
+                continue
+            addEdges(currVertex, nextEdges[j]);
     return vertices2
 
 
@@ -78,20 +80,59 @@ def addEdges(key: BMVert, values: List[BMEdge]) -> None:
 def deleteEdges() -> None:
     graph.clear()
 
+def __searchTheClosestValue(lengthValues: List[float], targetDistanceValue: float = 0.0) -> float:
+    return lengthValues[min(range(len(lengthValues)), key=lambda i: abs(lengthValues[i] - targetDistanceValue))]
 
+def __getDistanceBetweenEdges(currEdge: BMEdge, nextEdge: BMEdge) -> float:
+    return abs(currEdge - nextEdge);
 
+def edgeAngle(edge1: BMEdge, edge2: BMEdge) -> float:
+    b: BMVert = set(edge1.verts).intersection(edge2.verts).pop()
+    a: Vector = edge1.other_vert(b).co - b.co
+    c: Vector = edge2.other_vert(b).co - b.co
+    return a.angle(c);
+
+# ------------------------- distance to target edge
+def __estimateTheDistance(currVertex: BMVert, currEdgeLength:float) -> DefaultDict[BMEdge, float]:
+    distance:float;
+    output:DefaultDict = defaultdict(float)
+    for j in range(len(graph[currVertex])):
+        nextEdge = graph[currVertex][j];
+        distance = __getDistanceBetweenEdges(currEdge=currEdgeLength, nextEdge=nextEdge.calc_length());
+        output[nextEdge] = distance
+        info('index j: {}, current edge length: {}, next edge length: {}, distance between them {}'.format(j, currEdgeLength, nextEdge.calc_length(), distance));
+        if (distance > 0):
+            info('the current edge is bigger: {}'.format(distance));
+            continue;
+        elif (distance < 0):
+            info('the next distance is bigger: {}'.format(distance))
+        else:
+            info('the distance is equal to NULL: {}'.format(distance))
+    return output
+
+def __getClosestValue(currVertex:BMVert, currEdge:BMEdge) -> Tuple[BMEdge, float]:
+
+    closestEdge:BMEdge = graph[currVertex][0];#
+    closestValue: float = __getDistanceBetweenEdges(currEdge.calc_length(),  closestEdge.calc_length());
+    nextLength:float;
+    nextEdge:BMEdge;
+    for i in range(1, len(graph[currVertex])):
+        nextEdge = graph[currVertex][i]
+        nextLength = __getDistanceBetweenEdges(currEdge.calc_length(), nextEdge.calc_length());
+        if(nextLength < closestValue):
+            closestValue = nextLength;
+            closestEdge = nextEdge;
+    return closestEdge, closestValue
 # -------------------------- edges
 def __selectNextEdge(EDGE: BMEdge) -> None:
     """
     iterate over the graph excluding the edges that not meet the two criteria
     :param start:
-    :return: return a
+    :return: return nothing
     """
     vertices: List[BMVert] = __getNextEdges(EDGE)
-    limitS: float = 5.2
-    limitIn1: float = 5.0
-    limitIn2: float = 5.0
-    limitI: Tuple[float, bool]
+    print('NUMBER OF VERTICES {}'.format(vertices))
+    distanceEstimation: float;
     currEdge: BMEdge
     nextEdge: BMEdge
     currVertex: BMVert
@@ -103,30 +144,28 @@ def __selectNextEdge(EDGE: BMEdge) -> None:
         currEdge = EDGE  # queue.pop(0);
         edgeLength = currEdge.calc_length();
         currVertex = vertices.pop(0)  # vertices[i];
-        info('current Edge: {}, current vertices: {}, current vertices index: {}'.format(currEdge, currVertex,
-                                                                                         currVertex.index))
-        limitI = (limitIn1, True) if ((i + 1) % 2 == 0) else (limitIn2, False)
-        for j in range(len(graph[currVertex])):
-            nextEdge = graph[currVertex][j];  # self.__graph[currVertex].pop(0)
-            angle = (edgeAngle(currEdge, nextEdge) * 180) / pi;
-            limits = limitI[0] < angle < limitS
-            info('index i: {}, index j: {}, edge index: {}, angle value: {}'.format(i, j, nextEdge.index, angle));
-            if (limits and (edgeLength == nextEdge.calc_length())):
-                pass
-                info('current edge length: {}, next edge length: {}'.format(edgeLength, nextEdge.calc_length()));
+        info('current Edge: {}, current vertices: {}, current vertices index: {}'.format(currEdge, currVertex, currVertex.index))
+        distanceEstimation = __searchTheClosestValue(list(__estimateTheDistance(currVertex=currVertex, currEdgeLength=edgeLength).values()));
+        closestEdgeLength = __getClosestValue(currVertex, currEdge)
+        # angle = (self.__edgeAngle(currEdge, nextEdge)*180)/pi;
+        copyGraph: List[BMEdge] = graph[currVertex].copy()
+        length: int = len(copyGraph)
+        print(len(closestEdgeLength))
+        print('function distanceEstimation: {} vs closestEdgeLength: {}'.format(distanceEstimation, closestEdgeLength[1]))
+        print('index i: {}, target edge length: {}, closest edge length: {}, distance to the target length: {}'.format(i, edgeLength, closestEdgeLength[0], closestEdgeLength[1]));
+        # ---------- this  has to be included in the function getClosestValue ------
+        for _ in range(length):
+            nextEdge = graph[currVertex].pop(0)
+            print('the next edge', nextEdge)
+            if (nextEdge == closestEdgeLength[0]):
+                graph[currVertex].append(nextEdge)
+                print('selected edge length: {}, value of the selected edge length: {}'.format(closestEdgeLength[0], closestEdgeLength[1]));
             else:
-                graph[currVertex].remove(nextEdge);
+                print('delete edge {} from graph -> size of graph {}'.format(nextEdge, len(graph[currVertex])))
         i += 1;
         if (len(graph[currVertex]) > 1):
-            vertices.append(currVertex);
-            limitI[0] += 0.1;
-            limitIn1 = limitI[0] if (limitI[1]) else limitIn1;
-            limitIn2 = limitI[0] if (limitI[1] is False) else limitIn2
-        elif (len(graph[currVertex]) == 1):
-            selectedEdges.append(nextEdge)
-        else:
-            # len is 0
-            pass
+            info('there is more that one edge, select just one to continue')
+    print('the new selected edges'.format(graph))
 
 # --------------run----------------
 
@@ -135,7 +174,7 @@ def __excludeDuplicates() -> List[BMEdge]:
     currIndex:int
     indices:List[BMEdge] = list();
     if (len(selectedEdges)==1):
-        return list(selectedEdges[0].index)
+        return [selectedEdges[0].index]
     elif(len(selectedEdges)<1):
         print('the list ist empty')
     for i in range(len(selectedEdges)):
@@ -146,21 +185,26 @@ def __excludeDuplicates() -> List[BMEdge]:
 
 start: int = 0;
 visited: List[int] = __excludeDuplicates() #[False] * len(self.__selectedEdges)
+print(visited)
 queue: BMEdge;
 currEdge:BMEdge;
 while(len(selectedEdges)>0): # endlose Schleife
-    queue = selectedEdges[start]
-    if(visited[start] == queue.index):
-        start+=1;
+    currEdge = selectedEdges[start]
+    print(currEdge)
+    print(start)
+    if((len(selectedEdges)>1) and (visited[start] == currEdge.index)):
+        start +=1
         continue;
     #select the next edge
-    __selectNextEdge(queue)
+    __selectNextEdge(currEdge)
     print('two new edges ware selected and added!');
     visited = __excludeDuplicates()
+    if (start == 3):
+        print(selectedEdges)
     start+=1;
 
 def __activeEdgesEDITMODE( edges:List[BMEdge]) -> None:
-    #bm: BMesh = from_edit_mesh(self.__obj.data);
+    # bm: BMesh = from_edit_mesh(self.__obj.data);
     i:int;
     currEdge:BMEdge;
 
