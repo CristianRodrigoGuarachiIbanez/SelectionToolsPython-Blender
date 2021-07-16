@@ -198,9 +198,11 @@ while(len(selectedEdges)>0): # endlose Schleife
     #select the next edge
     __selectNextEdge(currEdge)
     print('two new edges ware selected and added!');
+    # the added edges into the graph muss be also added to the selectedEdges list!!! 
     visited = __excludeDuplicates()
+    print(visited)
     if (start == 3):
-        print(selectedEdges)
+        print(start, selectedEdges)
     start+=1;
 
 def __activeEdgesEDITMODE( edges:List[BMEdge]) -> None:
