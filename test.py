@@ -14,6 +14,7 @@ from logging import info, INFO
 from math import pi
 from os.path import dirname, join, expanduser, normpath, realpath
 from os import getcwd
+from statistics import mean
 import sys
 import bpy
 
@@ -91,45 +92,122 @@ class SelectionModesManager(Operator):
         :param start:
         :return: return a
         """
-        vertices: List[BMVert] = self.__getNextEdges(EDGE)
-        limitS:float = 5.2
-        limitIn1:float = 5.0
-        limitIn2:float = 5.0
-        limitI:Tuple[float, bool]
+        vertices: List[BMVert] = self.__getNextEdges(EDGE);
+        difference:float = 0.09
         currEdge: BMEdge
         nextEdge: BMEdge
         currVertex: BMVert
+        optim_value:float = 0.01;
         edgeLength:float
         angle:float
         limits:bool;
         i: int = 0;
         while(len(vertices)>0):
-            currEdge= EDGE#queue.pop(0);
+            currEdge= EDGE #queue.pop(0);
             edgeLength = currEdge.calc_length();
             currVertex = vertices.pop(0) #vertices[i];
             info('current Edge: {}, current vertices: {}, current vertices index: {}'.format( currEdge, currVertex, currVertex.index))
-            limitI = (limitIn1,True) if((i + 1) % 2 == 0) else (limitIn2,False)
-            for j in range(len(self.__graph[currVertex])):
-                nextEdge = self.__graph[currVertex][j]; # self.__graph[currVertex].pop(0)
-                angle = (self.__edgeAngle(currEdge, nextEdge)*180)/pi;
-                limits = limitI[0]<angle<limitS
-                info('index i: {}, index j: {}, edge index: {}, angle value: {}'.format(i, j, nextEdge.index, angle));
-                if(limits and (edgeLength == nextEdge.calc_length())):
-                    pass
-                    info('current edge length: {}, next edge length: {}'.format(edgeLength, nextEdge.calc_length()));
-                else:
-                    self.__graph[currVertex].remove(nextEdge);
+             #(limitIn1,True) if((i + 1) % 2 == 0) else (limitIn2,False)
+            self.__removeEdgesFromGraph(edgeLength, currVertex, difference, optim_value);
             i += 1;
+
             if(len(self.__graph[currVertex]) > 1):
                 vertices.append(currVertex);
-                limitI[0] += 0.1 ;
-                limitIn1 = limitI[0] if(limitI[1]) else limitIn1;
-                limitIn2 = limitI[0] if(limitI[1] is False) else limitIn2
+                difference -= 0.01;
+                while(difference >0):
+                    self.__removeEdgesFromGraph(edgeLength, currVertex, difference, optim_value)
+                    difference -= 0.01;
             elif(len(self.__graph[currVertex])==1):
-                self.__selectedEdges.append(nextEdge)
+                self.__selectedEdges.append(nextEdge);
             else:
                 #len is 0
                 pass
+    def __removeEdgesFromGraph(self, edgeLength:float, currVertex:BMVert, difference:float, optim_value:float) -> None:
+        limitS: Tuple[float, float, bool];
+        limitIn: Tuple[float, float, bool];
+        limitSup1: float
+        limitInf1: float;
+        limitInf1, limitSup1 = self.__createLimits(edgeLength, difference)
+        for j in range(len(self.__graph[currVertex])):
+            nextEdge = self.__graph[currVertex][j];  # self.__graph[currVertex].pop(0)
+            # angle = (self.__edgeAngle(currEdge, nextEdge)*180)/pi;
+            limitS = self.__compareUpperLimits(limitSup1, edgeLength, nextEdge.calc_length(), optim_value);   # limitI[0]<angle<limitS
+            limitIn = self.__compareLowerLimits(limitInf1, edgeLength, nextEdge.calc_length(), optim_value);
+            info('index j: {}, edge length upper limit: {}, edge length lower limit: {}'.format(j, limitS, limitIn));
+            if ((limitIn[2] is True) and (limitS[2] is True)):
+                info('current edge length: {}, next edge length: {}'.format(edgeLength, nextEdge.calc_length()));
+                continue;
+            elif ((limitIn[1] is True) and (limitS[1] is False)):
+                
+                self.__graph[currVertex].remove(nextEdge);
+            elif ((limitIn[1] is False) and (limitS[1] is True)):
+                self.__graph[currVertex].remove(nextEdge);
+            else:
+                self.__graph[currVertex].remove(nextEdge);
+
+    def __compareLowerLimits(self, lowerLimit:float, trueValue:float, newValue:float, opt_value:float, trial:int=10) -> Tuple[float, float, bool]:
+        lowerLimits: List[float] = list();
+        lowerLimitMean:float;
+        distance:float;
+        i:int =0;
+
+        while((lowerLimit < trueValue) and (lowerLimit < newValue)): # as long as the lower limit is smaller
+            lowerLimit = self.__increaseLowerLimit(lowerLimit, opt_value);
+            lowerLimits.append(lowerLimit);
+            if(trial==i):
+                break;
+            i+=1;
+
+        if(lowerLimit < newValue):
+            #calculate the distance between lower limit and value
+            distance = newValue - lowerLimit;
+            return lowerLimit, distance, True;
+        elif(lowerLimit==newValue):
+            distance = newValue - lowerLimit;
+            return lowerLimit, distance, True;
+        else:
+            distance = lowerLimit - newValue;
+            return lowerLimit, distance, False;
+
+    def __compareUpperLimits(self, upperLimit:float, trueValue:float, newValue:float,  opt_value:float, trial:int=10) -> Tuple[float, float, bool]:
+        upperLimits: List[float] = list();
+        lowerLimitMean: float;
+        distance:float;
+        i: int = 0;
+
+        while ((upperLimit > trueValue) and (upperLimit > newValue)): # as long as the upper limit is bigger
+            upperLimit = self.__dicreaseUpperLimit(upperLimit, opt_value);
+            upperLimits.append(upperLimit);
+            if (trial == i):
+                break;
+            i += 1;
+        if (upperLimit > newValue):
+            # calculate the distance between upper limit and value
+            distance = upperLimit -newValue;
+            return upperLimit, distance, True;
+        elif (upperLimit == newValue):
+            distance = upperLimit - newValue;
+            return upperLimit, distance, True;
+        else:
+            distance = newValue - upperLimit;
+            return upperLimit, distance, False;
+
+    @staticmethod
+    def __createLimits(valueLength:float, diff:float) -> Tuple[float,float]:
+        assert(valueLength > 0), ' the length of the edge is zero';
+        if (diff is None):
+            diff = 0.0;
+        lowerLimit:float = valueLength - diff;
+        upperLimit:float = valueLength + diff
+        return lowerLimit, upperLimit;
+
+    @staticmethod
+    def __increaseLowerLimit(lowerLimit:float, opt_value:float)-> float:
+        return lowerLimit + opt_value;
+
+    @staticmethod
+    def __dicreaseUpperLimit(upperLimit:float, opt_value:float) -> float:
+        return upperLimit - opt_value;
 
     def __excludeDuplicates(self) -> List[BMEdge]:
         i:int;
@@ -165,7 +243,7 @@ class SelectionModesManager(Operator):
     def __activeEdgesEDITMODE(self, edges:List[BMEdge]) -> None:
         #bm: BMesh = from_edit_mesh(self.__obj.data);
         i:int;
-        currEdge:BMEdge;
+        currEdge:BMEdge = None;
 
         for i in range(len(edges)):
             currEdge = edges[i];
