@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from bpy.props import StringProperty
 
 from bmesh.types import BMElemSeq, BMEdgeSeq, BMFaceSeq, BMVertSeq
@@ -11,7 +9,7 @@ from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, De
 from collections import defaultdict
 from mathutils import Vector
 from logging import info, INFO
-from state import StateEdge
+from stateEdges import StateEdge
 from math import pi
 from numpy import ndarray, asarray, abs as absolut, array
 from os.path import dirname, join, expanduser, normpath, realpath
@@ -29,20 +27,36 @@ class SelectionModesManager(Operator):
         self.__bm: BMesh;
         self.__selectedEdges: List[BMEdgeSeq] = list();
         #self.__selectedFaces: List[BMElemSeq] = list(); # save the faces
-        self.__extendedNodes: DefaultDict[int, StateEdge] = defaultdict(StateEdge);
+        self.__extendedNodes: DefaultDict[int, List[BMEdge]] = defaultdict(list);
         self.__angles: List[float] = list()
 
     def __getEdges(self) -> List[BMEdgeSeq]:
         return self.__selectedEdges
 
     def __addEdges(self, key:int, value:BMEdge) -> None:
-        self.__extendedNodes[key] = value;
+        self.__extendedNodes[key].append(value);
 
     def __deleteAllEdges(self) -> None:
-        self.__extendedNodes.clear()
+        self.__extendedNodes.clear();
 
     def calculateFacesAngle(self) -> None:
         pass
+    def __randListe(self, selectedEdge:BMEdge, children:List[BMEdge], parentChildren:List[BMEdge]=None)->None:
+        assert(len(children)>0),'Children´s List is Empty'
+        editedChildren:List[BMEdge]= None;
+        children:List[BMEdge] = children[:]
+        parentChildren:List[BMEdge] = parentChildren[:]
+        if(parentChildren is not None):
+            editedChildren = children + self.removeEdge(selectedEdge,parentChildren);
+            for i in range(len(editedChildren)):
+                self.__addEdges(selectedEdge,children[i])
+    @staticmethod
+    def removeEdge(selectedEdge:BMEdge, children:List[BMEdge])->List[BMEdge]:
+        assert(len(children)>0),'Children´s List is Empty';
+        if(selectedEdge in children):
+            children.remove(selectedEdge);
+            return children
+        return children
 
     def __excludeDuplicates(self) -> List[int]:
         i:int;
@@ -57,14 +71,13 @@ class SelectionModesManager(Operator):
         return list(set(indices)) # removes the duplicates
 
     def __constructEdgePath(self) -> Tuple[DefaultDict, List[BMEdge]]:
-
         start: int = 0;
         visited: List[int] = self.__excludeDuplicates() # list of edge indices [False] * len(self.__selectedEdges)
         nextEdge:BMEdge;
         # -------- clear dict EXTENDED NODES
         self.__deleteAllEdges()
         # ------------ declare and define StateEdges
-        searchingPath:StateEdge = StateEdge(parent=None,action=self.__selectedEdges[0], goal=self.__selectedEdges[0]);
+        searchingPath:StateEdge = StateEdge(parent=None,action=self.__selectedEdges[0]);
         # ------ create children-edges
         searchingPath.createChildrenEdges();
         # ------ save the status in EXTENDED NODES
@@ -72,23 +85,20 @@ class SelectionModesManager(Operator):
         while(True): # endlose Schleife
             # ------ look for the next edge and save in SELECTED EDGES
             nextEdge = searchingPath.getScoreOfTheNextEdge();
-            if(nextEdge is not None):
-                if(nextEdge == searchingPath.goal):
-                    visited.append(nextEdge.index);
-                    searchingPath = StateEdge(parent=searchingPath, action=nextEdge);
-                    self.__addEdges(start,searchingPath);
-                    print(' the goal EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge));
-                    return self.__extendedNodes, self.__selectedEdges;
-                elif(nextEdge.index not in visited):
-                    visited.append(nextEdge.index);
-                    self.__selectedEdges.append(nextEdge)
-                    print('a new EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge));
-                elif(nextEdge.index in visited):
-                    start+=1;
-                    continue
-            else:
-                print('NEXT EDGE is None');
-                break
+            assert (nextEdge is not None), 'there is none new selected edge'
+            if(nextEdge == searchingPath.goal):
+                visited.append(nextEdge.index);
+                searchingPath = StateEdge(parent=searchingPath, action=nextEdge);
+                self.__addEdges(start,searchingPath);
+                print(' the goal EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge));
+                return self.__extendedNodes, self.__selectedEdges;
+            elif(nextEdge.index not in visited):
+                visited.append(nextEdge.index);
+                self.__selectedEdges.append(nextEdge)
+                print('a new EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge));
+            elif(nextEdge.index in visited):
+                start+=1;
+                continue
             # ------- save the last node, action and children into the class itself
             searchingPath = StateEdge(searchingPath, nextEdge);
             # ------ create children-edges
@@ -164,4 +174,4 @@ def unregister() -> None:
 
 
 if __name__ == "__main__":
-    register()
+    register();
