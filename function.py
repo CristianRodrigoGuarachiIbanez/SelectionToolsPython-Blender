@@ -10,12 +10,7 @@ from collections import defaultdict
 from mathutils import Vector
 from logging import info, INFO
 from stateEdges import StateEdge
-from math import pi
-from os.path import dirname, join, expanduser, normpath, realpath
-from os import getcwd
-import sys
-import bpy
-from math import pi
+from queue import PriorityQueue
 
 
 # --------------------------- select the edge
@@ -39,32 +34,10 @@ else:
 
 # ------------------- def graph
 
-extendedNodes:DefaultDict[BMVert, StateEdge] = defaultdict(StateEdge);
+extendedNodes:PriorityQueue=PriorityQueue()
 
 # -----------------------------
 
-
-def __getNextEdges(edge: BMEdge) -> List[BMVert]:
-    deleteEdges()
-    currVertex: BMVert
-    vertexIndex: int
-    nextEdges: BMElemSeq[BMEdge]
-    vertices: List[BMVert] = [vert for vert in edge.verts]
-    # print(vertices)
-    vertices2 = vertices.copy()
-    i: int
-    j: int
-    for i in range(len(vertices)):
-        currVertex = vertices.pop()
-        nextEdges = currVertex.link_edges  # <BMElemSeq object at 0x7fd9d5c99780>
-        print('number of next edges: {}, number of vertices: {}'.format(len(nextEdges), len(vertices)));
-        for j in range(len(nextEdges)):
-            print('CURRENT EDGE {}, CURRENT VERTEX:{}, NEXT EDGE: {}, NEXT EDGE INDEX: {}'.format(edge, currVertex, nextEdges[j], nextEdges[j].index));
-            if(edge.index == nextEdges[j].index):
-                print(nextEdges)
-                continue
-            addEdges(currVertex, nextEdges[j]);
-    return vertices2
 
 
 def edgeAngle(edge1: BMEdge, edge2: BMEdge) -> float:
@@ -74,11 +47,17 @@ def edgeAngle(edge1: BMEdge, edge2: BMEdge) -> float:
     return a.angle(c);
 
 
-def addEdges(key: BMVert, values:StateEdge) -> None:
-    extendedNodes[key]=values;
+def addEdges(values:StateEdge) -> None:
+    extendedNodes.put(values)
 
-def deleteEdges() -> None:
-    extendedNodes.clear()
+
+def __deleteAllEdges() -> None:
+    while not (extendedNodes.empty()):
+        try:
+            extendedNodes.get(False)
+        except Exception:
+            continue
+        extendedNodes.task_done()
 
 def __searchTheClosestValue(lengthValues: List[float], targetDistanceValue: float = 0.0) -> float:
     return lengthValues[min(range(len(lengthValues)), key=lambda i: abs(lengthValues[i] - targetDistanceValue))]
@@ -86,7 +65,18 @@ def __searchTheClosestValue(lengthValues: List[float], targetDistanceValue: floa
 def __getDistanceBetweenEdges(currEdge: BMEdge, nextEdge: BMEdge) -> float:
     return abs(currEdge - nextEdge);
 
-
+def __randListe( state: StateEdge = None) -> None:
+    assert (len(state.children) > 0), 'Children´s List is Empty'
+    editedChildren: List[BMEdge] = None;
+    children: List[StateEdge] = state.children[:]
+    parentChildren: List[StateEdge] = state.children[:]
+    if (parentChildren is not None):
+        editedChildren = children + parentChildren;
+        for i in range(len(editedChildren)):
+            addEdges(editedChildren[i])
+    else:
+        for j in range(len(children)):
+            addEdges(children[j])
 # --------------run----------------
 
 def __excludeDuplicates() -> List[BMEdge]:
@@ -102,45 +92,53 @@ def __excludeDuplicates() -> List[BMEdge]:
     return list(set(indices)) # removes the duplicates
 # --------- main
 
-
 start: int = 0;
 visited: List[int] = __excludeDuplicates() #[False] * len(self.__selectedEdges)
 print(visited)
 queue: BMEdge;
 currEdge:BMEdge;
-deleteEdges()
+__deleteAllEdges()
+nextEdge:StateEdge;
 searchingPath: StateEdge = StateEdge(parent=None, action=selectedEdges[0]);
 # ------ create children-edges
 searchingPath.createChildrenEdges();
 # ------ save the status in EXTENDED NODES
-addEdges(0, searchingPath);
-while(len(selectedEdges)>0): # endlose Schleife
-    nextEdge = searchingPath.getScoreOfTheNextEdge();
+__randListe(searchingPath);
+while(True): # endlose Schleife
+    #nextEdge = searchingPath.getScoreOfTheNextEdge();
+    nextEdge = extendedNodes.get()
+    #print('CUSTOMED NEXT EDGE {} vs  PRIORITY QUEUED EDGE{}'.format(nextEdge, nextEdge2[1].action))
+    print('NEXT EDGE {}'.format(nextEdge))
     assert(nextEdge is not None), 'there is none edge!'
-    if (nextEdge == searchingPath.goal):
-        visited.append(nextEdge.index);
-        searchingPath = StateEdge(parent=searchingPath, action=nextEdge);
-        addEdges(start, searchingPath);
+    if (nextEdge.action == searchingPath.goal):
+        visited.append(nextEdge.action.index);
+        selectedEdges.append(nextEdge.action)
+        searchingPath = StateEdge(parent=searchingPath, action=nextEdge.action);
+        __randListe(searchingPath);
         print(' the goal EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge));
         print(extendedNodes, selectedEdges);
-    elif (nextEdge.index not in visited):
-        visited.append(nextEdge.index);
-        selectedEdges.append(nextEdge)
+        break
+    elif (nextEdge.action.index not in visited):
+        visited.append(nextEdge.action.index);
+        selectedEdges.append(nextEdge.action)
         print('a new EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge));
-    elif (nextEdge.index in visited):
+    elif (nextEdge.action.index in visited):
         start += 1;
         print('Jumping the code')
         continue
     # ------- save the last node, action and children into the class itself
-    searchingPath = StateEdge(searchingPath, nextEdge);
+    searchingPath = StateEdge(searchingPath, nextEdge.action);
     # ------ create children-edges
     searchingPath.createChildrenEdges();
     # -------- save the status in EXTENDED NODES
-    addEdges(start, searchingPath);
+    __randListe(searchingPath);
     print('a new OBJECT CLASS STATUS was added into the list of EXTENDED NODES!');
     start += 1;
     if (start == 20):
-        print(extendedNodes, selectedEdges);
+        print(selectedEdges);
+        while not (extendedNodes.empty()):
+            print(extendedNodes.get())
+        break
 
 def __activeEdgesEDITMODE( edges:List[BMEdge]) -> None:
     # bm: BMesh = from_edit_mesh(self.__obj.data);

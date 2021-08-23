@@ -40,45 +40,48 @@ class StateEdge(State):
             self.node: BMVert = [vert for vert in self.action.verts][0]
             self.path = [(action, self.node)]
             self.goal: BMEdge = action;
-    def getScoreOfTheNextEdge(self) -> BMEdge:
+    def __lt__(self, other:BMEdge):
+        score1: float = self.score
+        score2: float = other.score
+        if (score1 < score2):
+            return True
+        return False
+    def __le__(self, other:BMEdge):
+        score1:float = self.score
+        score2:float=other.score
+        if(score1<=score2):
+            return True
+        return False
+    def __checkGoalDefinition(self)->BMEdge:
+        if (self.parent is None):
+            return self.action;
+        else:
+            if (self.parent.goal is None):
+                return self.goal
+            else:
+                return self.parent.goal
+    def getScoreOfTheNextEdge(self) -> Tuple[BMEdge,float]:
         """
                 iterate over the list of children excluding the edges that not meet the one/two criteria
                 :return: BMEdge
         """
-        currEdge: BMEdge;
-        if(self.parent is None):
-            currEdge = self.action;
-        else:
-            if(self.parent.goal is None):
-                currEdge = self.goal
-            else:
-                currEdge = self.parent.goal
-        closestEdgeLength: Tuple[BMEdge, float] = self.__getClosestValue(self.children, currEdge);
-        self.score = closestEdgeLength[1]
-        length: int = len(self.children)
-        # ---------- this  has to be included in the function getClosestValue ------
-        nextStateEdge: StateEdge;
-        for j in range(length):
-            nextStateEdge = self.children.pop(0)
-            if (nextStateEdge == closestEdgeLength[0]):
-                return nextStateEdge.action
-            else:
-                print('delete edge {} and size of the children edges {}'.format(nextStateEdge, len(self.children)));
-    def __getClosestValue(self, nextEdges:List['StateEdge'], currEdge:BMEdge) -> Tuple[BMEdge, float]:
-        assert(len(nextEdges)>0), "the children's list is empty"
+        assert (len(self.children) > 0), "the children's list is empty"
+        closestValue:Tuple[StateEdge,float] = self.__getClosestValue(self.children);
+        self.children.remove(closestValue[0])
+        return closestValue[0].action, closestValue[1]
+    @staticmethod
+    def __getClosestValue(nextEdges:List['StateEdge']) -> Tuple['StateEdge',float]:
         closestEdge:StateEdge = nextEdges[0];#
-        closestValue: float = self.__getDistanceBetweenEdges(currEdge.calc_length(),  closestEdge.action.calc_length());
-        closestEdge.score = closestValue; # the difference will be saved in the class score
+        closestValue: float = closestEdge.score;
         nextLength:float;
         nextEdge:BMEdge;
         for i in range(1, len(nextEdges)):
             nextEdge = nextEdges[i]
-            nextLength = self.__getDistanceBetweenEdges(currEdge.calc_length(), nextEdge.action.calc_length());
-            closestEdge.score=nextLength; # the difference will be saved into the class score
+            nextLength = nextEdge.score
             if(nextLength < closestValue):
                 closestValue = nextLength;
                 closestEdge = nextEdge;
-        return closestEdge, closestValue
+        return closestEdge, closestValue;
     @staticmethod
     def __getDistanceBetweenEdges(currEdge: float, nextEdge:float) -> float:
         return abs(currEdge - nextEdge);
@@ -92,7 +95,7 @@ class StateEdge(State):
     def createChildrenEdges(self) ->None:
         i:int;
         j:int;
-        nextEdges = self.node.link_edges  #
+        nextEdges = self.node.link_edges  # recover the linked EDGES
         stateEdge: StateEdge;
         print('number of children edges: {}, parent vertex: {}'.format(len(nextEdges), self.node));
         for j in range(len(nextEdges)):
@@ -100,5 +103,7 @@ class StateEdge(State):
             if (self.action.index == nextEdges[j].index):
                 continue;
             stateEdge = StateEdge(self, nextEdges[j]);
+            stateEdge.score = self.__getDistanceBetweenEdges(self.__checkGoalDefinition().calc_length(), nextEdges[j].calc_length())
+            print('SCORE:', stateEdge.score)
             self.children.append(stateEdge);
         print('number of children edges after: {}'.format(len(self.children)))

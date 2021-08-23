@@ -10,10 +10,8 @@ from collections import defaultdict
 from mathutils import Vector
 from logging import info, INFO
 from stateEdges import StateEdge
-from math import pi
+from queue import PriorityQueue
 from numpy import ndarray, asarray, abs as absolut, array
-from os.path import dirname, join, expanduser, normpath, realpath
-from os import getcwd
 import sys
 import bpy
 
@@ -27,37 +25,38 @@ class SelectionModesManager(Operator):
         self.__bm: BMesh;
         self.__selectedEdges: List[BMEdgeSeq] = list();
         #self.__selectedFaces: List[BMElemSeq] = list(); # save the faces
-        self.__extendedNodes: DefaultDict[int, List[BMEdge]] = defaultdict(list);
+        #self.__extendedNodes: DefaultDict[int, List[BMEdge]] = defaultdict(list);
+        self.__priorityQueue:PriorityQueue=PriorityQueue()
         self.__angles: List[float] = list()
 
     def __getEdges(self) -> List[BMEdgeSeq]:
         return self.__selectedEdges
 
-    def __addEdges(self, key:int, value:BMEdge) -> None:
-        self.__extendedNodes[key].append(value);
+    def __addStatesToRandList(self, state:StateEdge) -> None:
+        self.__priorityQueue.put(state);
 
     def __deleteAllEdges(self) -> None:
-        self.__extendedNodes.clear();
+        while not(self.__priorityQueue.empty()):
+            try:
+                self.__priorityQueue.get(False)
+            except Exception:
+                continue
+            self.__priorityQueue.task_done()
 
     def calculateFacesAngle(self) -> None:
         pass
-    def __randListe(self, selectedEdge:BMEdge, children:List[BMEdge], parentChildren:List[BMEdge]=None)->None:
-        assert(len(children)>0),'Children´s List is Empty'
+    def __randListe(self, state:StateEdge=None)->None:
+        assert(len(state.children)>0),'Children´s List is Empty'
         editedChildren:List[BMEdge]= None;
-        children:List[BMEdge] = children[:]
-        parentChildren:List[BMEdge] = parentChildren[:]
+        children:List[StateEdge] = state.children[:]
+        parentChildren:List[StateEdge] = state.children[:]
         if(parentChildren is not None):
-            editedChildren = children + self.removeEdge(selectedEdge,parentChildren);
+            editedChildren = children + parentChildren;
             for i in range(len(editedChildren)):
-                self.__addEdges(selectedEdge,children[i])
-    @staticmethod
-    def removeEdge(selectedEdge:BMEdge, children:List[BMEdge])->List[BMEdge]:
-        assert(len(children)>0),'Children´s List is Empty';
-        if(selectedEdge in children):
-            children.remove(selectedEdge);
-            return children
-        return children
-
+                self.__addStatesToRandList(editedChildren[i])
+        else:
+            for j in range(len(children)):
+                self.__addStatesToRandList(children[j])
     def __excludeDuplicates(self) -> List[int]:
         i:int;
         currIndex:int
@@ -77,34 +76,36 @@ class SelectionModesManager(Operator):
         # -------- clear dict EXTENDED NODES
         self.__deleteAllEdges()
         # ------------ declare and define StateEdges
-        searchingPath:StateEdge = StateEdge(parent=None,action=self.__selectedEdges[0]);
+        state:StateEdge = StateEdge(parent=None,action=self.__selectedEdges[0]);
         # ------ create children-edges
-        searchingPath.createChildrenEdges();
-        # ------ save the status in EXTENDED NODES
-        self.__addEdges(0,searchingPath)
+        state.createChildrenEdges();
+        # ------ save the RAND LIST as a priority queue
+        self.__randListe(state)
         while(True): # endlose Schleife
             # ------ look for the next edge and save in SELECTED EDGES
-            nextEdge = searchingPath.getScoreOfTheNextEdge();
+            nextEdge = state.getScoreOfTheNextEdge();
+            nextEdge2 = self.__priorityQueue.get()
+            print('CUSTOMED NEXT EDGE {} vs  PRIORITY QUEUED EDGE{}'.format(nextEdge,nextEdge2))
             assert (nextEdge is not None), 'there is none new selected edge'
-            if(nextEdge == searchingPath.goal):
-                visited.append(nextEdge.index);
-                searchingPath = StateEdge(parent=searchingPath, action=nextEdge);
-                self.__addEdges(start,searchingPath);
+            if(nextEdge[0] == state.goal):
+                visited.append(nextEdge[0].index);
+                state = StateEdge(parent=state, action=nextEdge);
+                self.__addEdges(start,state);
                 print(' the goal EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge));
                 return self.__extendedNodes, self.__selectedEdges;
-            elif(nextEdge.index not in visited):
-                visited.append(nextEdge.index);
-                self.__selectedEdges.append(nextEdge)
+            elif(nextEdge[0].index not in visited):
+                visited.append(nextEdge[0].index);
+                self.__selectedEdges.append(nextEdge[0])
                 print('a new EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge));
-            elif(nextEdge.index in visited):
+            elif(nextEdge[0].index in visited):
                 start+=1;
                 continue
             # ------- save the last node, action and children into the class itself
-            searchingPath = StateEdge(searchingPath, nextEdge);
+            state = StateEdge(state, nextEdge[0]);
             # ------ create children-edges
-            searchingPath.createChildrenEdges();
+            state.createChildrenEdges();
             # -------- save the status in EXTENDED NODES
-            self.__addEdges(start, searchingPath);
+            self.__randListe(state);
             print('a new OBJECT CLASS STATUS was added into the list of EXTENDED NODES!');
             start+=1;
             if (start == 3):
