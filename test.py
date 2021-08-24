@@ -46,10 +46,11 @@ class SelectionModesManager(Operator):
     def calculateFacesAngle(self) -> None:
         pass
     def __randListe(self, state:StateEdge=None)->None:
-        assert(len(state.children)>0),'Children´s List is Empty'
+        assert (state is not None),'state ist NoneType';
+        assert(len(state.children)>0),'Children´s List is Empty';
         editedChildren:List[BMEdge]= None;
         children:List[StateEdge] = state.children[:]
-        parentChildren:List[StateEdge] = state.children[:]
+        parentChildren:List[StateEdge] = state.parent.children[:] if(state.parent is not None) else None;
         if(parentChildren is not None):
             editedChildren = children + parentChildren;
             for i in range(len(editedChildren)):
@@ -69,7 +70,7 @@ class SelectionModesManager(Operator):
             indices.append(self.__selectedEdges[i].index) # saves the indices
         return list(set(indices)) # removes the duplicates
 
-    def __constructEdgePath(self) -> Tuple[DefaultDict, List[BMEdge]]:
+    def __constructEdgePath(self) -> StateEdge:
         start: int = 0;
         visited: List[int] = self.__excludeDuplicates() # list of edge indices [False] * len(self.__selectedEdges)
         nextEdge:BMEdge;
@@ -83,22 +84,22 @@ class SelectionModesManager(Operator):
         self.__randListe(state)
         while(True): # endlose Schleife
             # ------ look for the next edge and save in SELECTED EDGES
-            nextEdge = state.getScoreOfTheNextEdge();
-            nextEdge2 = self.__priorityQueue.get()
-            print('CUSTOMED NEXT EDGE {} vs  PRIORITY QUEUED EDGE{}'.format(nextEdge,nextEdge2))
+            #nextEdge = state.getScoreOfTheNextEdge();
+            nextEdge = self.__priorityQueue.get()
+            print('PRIORITY QUEUED EDGE{}, VERTEX{}'.format(nextEdge.action,nextEdge.node))
             assert (nextEdge is not None), 'there is none new selected edge'
-            if(nextEdge[0] == state.goal):
-                visited.append(nextEdge[0].index);
-                state = StateEdge(parent=state, action=nextEdge);
+            if(nextEdge.action == state.goal):
+                visited.append(nextEdge.index);
+                state = StateEdge(parent=state, action=nextEdge.action);
                 self.__addEdges(start,state);
-                print(' the goal EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge));
-                return self.__extendedNodes, self.__selectedEdges;
-            elif(nextEdge[0].index not in visited):
-                visited.append(nextEdge[0].index);
-                self.__selectedEdges.append(nextEdge[0])
-                print('a new EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge));
-            elif(nextEdge[0].index in visited):
+                print(' the goal EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge.action));
+                return state;
+            elif(nextEdge.index not in visited):
                 start+=1;
+                visited.append(nextEdge.index);
+                self.__selectedEdges.append(nextEdge.action)
+                print('a new EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge.action));
+            elif(nextEdge.index in visited):
                 continue
             # ------- save the last node, action and children into the class itself
             state = StateEdge(state, nextEdge[0]);
@@ -108,19 +109,21 @@ class SelectionModesManager(Operator):
             self.__randListe(state);
             print('a new OBJECT CLASS STATUS was added into the list of EXTENDED NODES!');
             start+=1;
-            if (start == 3):
-                return self.__extendedNodes, self.__selectedEdges
+            if (start == 20):
+                while not(self.__priorityQueue.empty()):
+                    print(self.__priorityQueue.get().action);
+                return state;
 
     def __activeEdgesEDITMODE(self) -> None:
         #bm: BMesh = from_edit_mesh(self.__obj.data);
-        EDGES:List[BMEdge]=self.__selectedEdges
+        EDGES:StateEdge=self.__constructEdgePath()
         i:int;
         currEdge:BMEdge=None;
         for i in range(len(EDGES)):
             currEdge = EDGES[i];
             currEdge.select=True;
-        self.__bm.select_history.clear()
-        self.__bm.select_history.add(currEdge)
+            self.__bm.select_history.clear();
+            self.__bm.select_history.add(currEdge);
         update_edit_mesh(self.__obj.data)
 
     def execute(self, context) -> Set[str]:

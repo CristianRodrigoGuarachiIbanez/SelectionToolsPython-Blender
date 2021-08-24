@@ -4,7 +4,7 @@ from bpy import context
 from bpy.types import Object, Operator, Panel, ID
 from bmesh import from_edit_mesh, update_edit_mesh
 from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, DefaultDict
-from copy import deepcopy
+from copy import deepcopy,copy
 from abc import ABCMeta, ABC
 
 class State(ABC):
@@ -31,13 +31,13 @@ class State(ABC):
 class StateEdge(State):
     def __init__(self, parent:State, action:BMEdge) -> None:
         super(StateEdge, self).__init__(parent, action);
-        if (parent):
-            self.node: BMVert = self.__createNodeVertex()
+        if (parent is not None):
+            self.node = action.other_vert(parent.node)#self.__createNodeVertex()
             self.path = parent.path[:];
             self.path.append((action, self.node))
-            self.goal: BMEdge = deepcopy(parent.goal);
+            self.goal: BMEdge = parent.goal;
         else:
-            self.node: BMVert = [vert for vert in self.action.verts][0]
+            self.node: BMVert = [vert for vert in self.action.verts][0];
             self.path = [(action, self.node)]
             self.goal: BMEdge = action;
     def __lt__(self, other:BMEdge):
@@ -85,13 +85,14 @@ class StateEdge(State):
     @staticmethod
     def __getDistanceBetweenEdges(currEdge: float, nextEdge:float) -> float:
         return abs(currEdge - nextEdge);
-    def __createNodeVertex(self) -> BMVert:
-        vertices: List[BMVert];
-        if(self.parent.node is None):
-            vertices = [vert for vert in self.action.verts]
-            return vertices.pop(0);
+    @staticmethod
+    def __createNodeVertex(parent,action) -> BMVert:
+        assert(parent is not None),'it can not create children because the parent is NoneType';
+        vertices: List[BMVert] = [vert for vert in action.verts]
+        if(parent.node in vertices):
+            return action.other_vert(parent.node);
         else:
-            return self.action.other_vert(self.parent.node);
+            return vertices.pop(0) # ------- > ändere das was hier zurückgeliefert wird
     def createChildrenEdges(self) ->None:
         i:int;
         j:int;

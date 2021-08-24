@@ -66,10 +66,11 @@ def __getDistanceBetweenEdges(currEdge: BMEdge, nextEdge: BMEdge) -> float:
     return abs(currEdge - nextEdge);
 
 def __randListe( state: StateEdge = None) -> None:
-    assert (len(state.children) > 0), 'Children´s List is Empty'
+    if(state is None):raise AssertionError('state ist NoneType')
+    assert (len(state.children)>0), 'Children´s List is Empty'
     editedChildren: List[BMEdge] = None;
     children: List[StateEdge] = state.children[:]
-    parentChildren: List[StateEdge] = state.children[:]
+    parentChildren: List[StateEdge] = state.parent.children[:] if(state.parent is not None) else None
     if (parentChildren is not None):
         editedChildren = children + parentChildren;
         for i in range(len(editedChildren)):
@@ -108,7 +109,7 @@ while(True): # endlose Schleife
     #nextEdge = searchingPath.getScoreOfTheNextEdge();
     nextEdge = extendedNodes.get()
     #print('CUSTOMED NEXT EDGE {} vs  PRIORITY QUEUED EDGE{}'.format(nextEdge, nextEdge2[1].action))
-    print('NEXT EDGE {}'.format(nextEdge))
+    print('NEXT EDGE {}, NEXT VERTEX {}'.format(nextEdge.action,nextEdge.node))
     assert(nextEdge is not None), 'there is none edge!'
     if (nextEdge.action == searchingPath.goal):
         visited.append(nextEdge.action.index);
@@ -119,6 +120,7 @@ while(True): # endlose Schleife
         print(extendedNodes, selectedEdges);
         break
     elif (nextEdge.action.index not in visited):
+        start+=1;
         visited.append(nextEdge.action.index);
         selectedEdges.append(nextEdge.action)
         print('a new EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge));
@@ -137,7 +139,7 @@ while(True): # endlose Schleife
     if (start == 20):
         print(selectedEdges);
         while not (extendedNodes.empty()):
-            print(extendedNodes.get())
+            print(extendedNodes.get().action)
         break
 
 def __activeEdgesEDITMODE( edges:List[BMEdge]) -> None:
