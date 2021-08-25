@@ -69,6 +69,10 @@ class StateEdge(State):
         closestValue:Tuple[StateEdge,float] = self.__getClosestValue(self.children);
         self.children.remove(closestValue[0])
         return closestValue[0].action, closestValue[1]
+    def calculateTheScore(self)->None:
+        currEdge:float = self.parent.action.calc_length()
+        nextEdge:float = self.goal.calc_length()
+        self.score = self.__getDistanceBetweenEdges(currEdge,nextEdge)
     @staticmethod
     def __getClosestValue(nextEdges:List['StateEdge']) -> Tuple['StateEdge',float]:
         closestEdge:StateEdge = nextEdges[0];#
@@ -88,10 +92,11 @@ class StateEdge(State):
     @staticmethod
     def __createNodeVertex(parent,action) -> BMVert:
         assert(parent is not None),'it can not create children because the parent is NoneType';
-        vertices: List[BMVert] = [vert for vert in action.verts]
-        if(parent.node in vertices):
+        vertices: List[BMVert];
+        if(parent.node is True):
             return action.other_vert(parent.node);
         else:
+            vertices = [vert for vert in action.action.verts]
             return vertices.pop(0) # ------- > ändere das was hier zurückgeliefert wird
     def createChildrenEdges(self) ->None:
         i:int;

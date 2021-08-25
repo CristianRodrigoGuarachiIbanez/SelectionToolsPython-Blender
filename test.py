@@ -69,14 +69,22 @@ class SelectionModesManager(Operator):
         for i in range(len(self.__selectedEdges)):
             indices.append(self.__selectedEdges[i].index) # saves the indices
         return list(set(indices)) # removes the duplicates
-
+    @staticmethod
+    def __checkNodeInStatus(action:StateEdge, currState:StateEdge)->bool:
+        assert ((currState is not None) and (action is not None)), 'it can not create children because the parent is NoneType';
+        vertices: List[BMVert] = [vert for vert in action.action.verts]
+        if(currState.node in vertices):
+            return True
+        else:
+            return False  # ------- > ändere das was hier zurückgeliefert wird
     def __constructEdgePath(self) -> StateEdge:
         start: int = 0;
         visited: List[int] = self.__excludeDuplicates() # list of edge indices [False] * len(self.__selectedEdges)
         nextEdge:BMEdge;
+        parentNode:bool;
         # -------- clear dict EXTENDED NODES
         self.__deleteAllEdges()
-        # ------------ declare and define StateEdges
+        # ------------ declare and define StateEdges, first call has none SCORE
         state:StateEdge = StateEdge(parent=None,action=self.__selectedEdges[0]);
         # ------ create children-edges
         state.createChildrenEdges();
@@ -84,7 +92,6 @@ class SelectionModesManager(Operator):
         self.__randListe(state)
         while(True): # endlose Schleife
             # ------ look for the next edge and save in SELECTED EDGES
-            #nextEdge = state.getScoreOfTheNextEdge();
             nextEdge = self.__priorityQueue.get()
             print('PRIORITY QUEUED EDGE{}, VERTEX{}'.format(nextEdge.action,nextEdge.node))
             assert (nextEdge is not None), 'there is none new selected edge'
@@ -101,8 +108,17 @@ class SelectionModesManager(Operator):
                 print('a new EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge.action));
             elif(nextEdge.index in visited):
                 continue
+            # -------- check if parent node in current edge
+            parentNode = self.__checkNodeInStatus(nextEdge,state)
             # ------- save the last node, action and children into the class itself
-            state = StateEdge(state, nextEdge[0]);
+            if(parentNode is True):
+                state = StateEdge(state, nextEdge.action)
+                # ------ calculate the score for the current edge
+                state.calculateTheScore()
+            else:
+                # the last state will be saved into the priority queue
+                self.__addStatesToRandList(state);
+                state = nextEdge
             # ------ create children-edges
             state.createChildrenEdges();
             # -------- save the status in EXTENDED NODES
@@ -113,7 +129,6 @@ class SelectionModesManager(Operator):
                 while not(self.__priorityQueue.empty()):
                     print(self.__priorityQueue.get().action);
                 return state;
-
     def __activeEdgesEDITMODE(self) -> None:
         #bm: BMesh = from_edit_mesh(self.__obj.data);
         EDGES:StateEdge=self.__constructEdgePath()

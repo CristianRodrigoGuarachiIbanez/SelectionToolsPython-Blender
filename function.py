@@ -91,6 +91,26 @@ def __excludeDuplicates() -> List[BMEdge]:
     for i in range(len(selectedEdges)):
         indices.append(selectedEdges[i].index) # saves the indices
     return list(set(indices)) # removes the duplicates
+
+def __checkNodeInStatus(action:StateEdge,currState:StateEdge) ->bool:
+    assert ((currState is not None) and (action is not None)), 'it can not create children because the parent is NoneType';
+    vertices: List[BMVert] = [vert for vert in action.action.verts]
+    if (currState.node in vertices):
+        return True;
+    else:
+        return False;
+
+# --------------------
+def __activateEdgesEDITMODE( edges:List[BMEdge]) -> None:
+    # bm: BMesh = from_edit_mesh(self.__obj.data);
+    i:int;
+    currEdge:BMEdge;
+    for i in range(len(edges)):
+        currEdge = edges[i];
+        currEdge.select=True;
+        bm.select_history.clear()
+        bm.select_history.add(currEdge)
+    update_edit_mesh(obj.data)
 # --------- main
 
 start: int = 0;
@@ -98,24 +118,25 @@ visited: List[int] = __excludeDuplicates() #[False] * len(self.__selectedEdges)
 print(visited)
 queue: BMEdge;
 currEdge:BMEdge;
+actions:List[BMEdge]=None;
 __deleteAllEdges()
 nextEdge:StateEdge;
-searchingPath: StateEdge = StateEdge(parent=None, action=selectedEdges[0]);
+status: StateEdge = StateEdge(parent=None, action=selectedEdges[0]);
 # ------ create children-edges
-searchingPath.createChildrenEdges();
+status.createChildrenEdges();
 # ------ save the status in EXTENDED NODES
-__randListe(searchingPath);
+__randListe(status);
 while(True): # endlose Schleife
     #nextEdge = searchingPath.getScoreOfTheNextEdge();
     nextEdge = extendedNodes.get()
     #print('CUSTOMED NEXT EDGE {} vs  PRIORITY QUEUED EDGE{}'.format(nextEdge, nextEdge2[1].action))
     print('NEXT EDGE {}, NEXT VERTEX {}'.format(nextEdge.action,nextEdge.node))
     assert(nextEdge is not None), 'there is none edge!'
-    if (nextEdge.action == searchingPath.goal):
+    if (nextEdge.action == status.goal):
         visited.append(nextEdge.action.index);
         selectedEdges.append(nextEdge.action)
-        searchingPath = StateEdge(parent=searchingPath, action=nextEdge.action);
-        __randListe(searchingPath);
+        status = StateEdge(parent=status, action=nextEdge.action);
+        __randListe(status);
         print(' the goal EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge));
         print(extendedNodes, selectedEdges);
         break
@@ -125,35 +146,33 @@ while(True): # endlose Schleife
         selectedEdges.append(nextEdge.action)
         print('a new EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge));
     elif (nextEdge.action.index in visited):
-        start += 1;
         print('Jumping the code')
         continue
+    # -------- check if parent node in current edge
+    parentNode = __checkNodeInStatus(nextEdge, status)
     # ------- save the last node, action and children into the class itself
-    searchingPath = StateEdge(searchingPath, nextEdge.action);
+    if (parentNode is True):
+        # ------- save the last node, action and children into the class itself
+        status = StateEdge(status, nextEdge.action);
+        # ------ calculate the score for the current edge
+        status.calculateTheScore()
+    else:
+        # the last state will be saved into the priority queue
+        addEdges(status);
+        state = nextEdge
     # ------ create children-edges
-    searchingPath.createChildrenEdges();
+    status.createChildrenEdges();
     # -------- save the status in EXTENDED NODES
-    __randListe(searchingPath);
+    __randListe(status);
     print('a new OBJECT CLASS STATUS was added into the list of EXTENDED NODES!');
     start += 1;
     if (start == 20):
-        print(selectedEdges);
+        actions = list()
         while not (extendedNodes.empty()):
-            print(extendedNodes.get().action)
+            actions.append(extendedNodes.get().action)
         break
 
-def __activeEdgesEDITMODE( edges:List[BMEdge]) -> None:
-    # bm: BMesh = from_edit_mesh(self.__obj.data);
-    i:int;
-    currEdge:BMEdge;
+__activateEdgesEDITMODE(actions)
 
-    for i in range(len(edges)):
-        currEdge = edges[i];
-        currEdge.select=True;
-
-    bm.select_history.clear()
-    bm.select_history.add(currEdge)
-
-    update_edit_mesh(obj.data)
 
 
