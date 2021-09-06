@@ -100,16 +100,35 @@ def __checkNodeInStatus(action:StateEdge,currState:StateEdge) ->bool:
     else:
         return False;
 
+def __extractStatesParents(stateValue: StateEdge) -> List[BMEdge]:
+    parents: List[BMEdge] = list()
+    action: StateEdge = stateValue.parent;
+    if (action is not None): parents.append(action.action);
+    i: int = 0
+    while (True):
+        if (action.parent is None):
+            break
+        try:
+            action = action.parent
+            print('index:{}, action:{}'.format(i, action))
+            parents.append(action.action)
+        except Exception as e:
+            print('[Exception] :', e)
+        i += 1
+    return parents
+
 # --------------------
 def __activateEdgesEDITMODE( edges:List[BMEdge]) -> None:
     # bm: BMesh = from_edit_mesh(self.__obj.data);
     i:int;
     currEdge:BMEdge;
     for i in range(len(edges)):
-        currEdge = edges[i];
-        currEdge.select=True;
-        bm.select_history.clear()
-        bm.select_history.add(currEdge)
+        for j in range(len(edges[i])):
+            print('index i:{}, indexj:{}, edges:{}'.format(i,j,edges[i][j]))
+            currEdge = edges[i][j];
+            currEdge.select=True;
+            bm.select_history.clear()
+            bm.select_history.add(currEdge)
     update_edit_mesh(obj.data)
 # --------- main
 
@@ -118,7 +137,7 @@ visited: List[int] = __excludeDuplicates() #[False] * len(self.__selectedEdges)
 print(visited)
 queue: BMEdge;
 currEdge:BMEdge;
-actions:List[BMEdge]=None;
+actions:List[BMEdge]= list();
 __deleteAllEdges()
 nextEdge:StateEdge;
 status: StateEdge = StateEdge(parent=None, action=selectedEdges[0]);
@@ -166,12 +185,13 @@ while(True): # endlose Schleife
     __randListe(status);
     print('a new OBJECT CLASS STATUS was added into the list of EXTENDED NODES!');
     start += 1;
-    if (start == 20):
-        actions = list()
+    if (start == 30):
+        actions.append(__extractStatesParents(status))
         while not (extendedNodes.empty()):
-            actions.append(extendedNodes.get().action)
+            actions.append(__extractStatesParents(extendedNodes.get()))
         break
-
+for action in actions:
+    print(action)
 __activateEdgesEDITMODE(actions)
 
 
