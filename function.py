@@ -159,7 +159,7 @@ while(True): # endlose Schleife
     else:
         # the last state will be saved into the priority queue
         addEdges(status);
-        state = nextEdge
+        status = nextEdge
     # ------ create children-edges
     status.createChildrenEdges();
     # -------- save the status in EXTENDED NODES

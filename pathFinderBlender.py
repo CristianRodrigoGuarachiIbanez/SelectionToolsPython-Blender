@@ -10,9 +10,9 @@ from abc import ABCMeta, ABC
 import bpy
 
 class State(ABC):
-    def __init__(self, parent:'State', action:BMEdge) -> None:
+    def __init__(self, parent:'StateEdge', action:BMEdge) -> None:
         self.children:List[BMEdge] = [];
-        self.parent:'State'= parent;
+        self.parent:'StateEdge'= parent;
         self.action: BMEdge = action;
         # ----- define later
         self.node: BMVert = None;
@@ -31,7 +31,7 @@ class State(ABC):
         pass
 
 class StateEdge(State):
-    def __init__(self, parent:State, action:BMEdge) -> None:
+    def __init__(self, parent:'StateEdge', action:BMEdge) -> None:
         super(StateEdge, self).__init__(parent, action);
         if (parent is not None):
             self.node = action.other_vert(parent.node)#self.__createNodeVertex()
@@ -117,13 +117,10 @@ class SelectionManager(Operator):
         #self.__selectedFaces:List[BMElemSeq] = list(); # save the faces
         self.__priorityQueue:PriorityQueue=PriorityQueue()
         self.__angles:List[float] = list()
-
     def __getEdges(self) -> List[BMEdgeSeq]:
         return self.__selectedEdges
-
     def __addStatesToRandList(self, state:StateEdge) -> None:
         self.__priorityQueue.put(state);
-
     def __deleteAllEdges(self) -> None:
         while not(self.__priorityQueue.empty()):
             try:
@@ -176,6 +173,23 @@ class SelectionManager(Operator):
             return True
         else:
             return False  # ------- > ändere das was hier zurückgeliefert wird
+    @staticmethod
+    def __extractStatesParents(stateValue: StateEdge) -> List[BMEdge]:
+        parents: List[BMEdge] = list()
+        action: StateEdge = stateValue.parent;
+        if (action is not None): parents.append(action.action);
+        i: int = 0
+        while (True):
+            if (action.parent is None):
+                break
+            try:
+                action = action.parent
+                print('index:{}, action:{}'.format(i, action))
+                parents.append(action.action)
+            except Exception as e:
+                print('[Exception] :', e)
+            i += 1
+        return parents
     def __constructEdgePath(self) -> List[BMEdge]:
         start: int = 0;
         visited: List[int] = self.__excludeDuplicates() # list of edge indices [False] * len(self.__selectedEdges)
@@ -227,22 +241,25 @@ class SelectionManager(Operator):
             self.__randListe(state);
             print('a new OBJECT CLASS STATUS was added into the list of EXTENDED NODES!');
             start+=1;
-            if (start == 30):
-                while not(self.__priorityQueue.empty()):
-                    actions.append(self.__priorityQueue.get().action);
+            if (start == 80):
+                actions.append(self.__extractStatesParents(state))
+                while not (self.__priorityQueue.empty()):
+                    actions.append(self.__extractStatesParents(self.__priorityQueue.get()));
                 break;
         return actions
-    def __activateEdgesEDITMODE(self,EDGES:List[BMEdge]) -> None:
+    def __activateEdgesEDITMODE(self,EDGES:List[List[BMEdge]]) -> None:
         #bm: BMesh = from_edit_mesh(self.__obj.data);
         i:int;
         currEdge:BMEdge=None;
-        for i in range(len(EDGES)):
-            currEdge = EDGES[i];
-            currEdge.select=True;
-            self.__bm.select_history.clear();
-            self.__bm.select_history.add(currEdge);
+        for j in range(len(EDGES)):
+            for i in range(len(EDGES[j])):
+                currEdge = EDGES[j][i];
+                currEdge.select=True;
+                self.__bm.select_history.clear();
+                self.__bm.select_history.add(currEdge);
         update_edit_mesh(self.__obj.data)
     def execute(self, context) -> Set[str]:
+        actions:List[List[BMEdge]];
         self.__selectedEdges.clear()
         try:
             self.__setSelectedEdges()

@@ -1,3 +1,4 @@
+
 from bpy.props import StringProperty
 
 from bmesh.types import BMElemSeq, BMEdgeSeq, BMFaceSeq, BMVertSeq
@@ -77,6 +78,7 @@ class SelectionModesManager(Operator):
             return True
         else:
             return False  # ------- > ändere das was hier zurückgeliefert wird
+
     def __constructEdgePath(self) -> StateEdge:
         start: int = 0;
         visited: List[int] = self.__excludeDuplicates() # list of edge indices [False] * len(self.__selectedEdges)

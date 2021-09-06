@@ -8,9 +8,9 @@ from copy import deepcopy,copy
 from abc import ABCMeta, ABC
 
 class State(ABC):
-    def __init__(self, parent:'State', action:BMEdge) -> None:
+    def __init__(self, parent:'StateEdge', action:BMEdge) -> None:
         self.children:List[BMEdge] = [];
-        self.parent:'State'= parent;
+        self.parent:'StateEdge'= parent;
         self.action: BMEdge = action;
         # ----- define later
         self.node: BMVert = None;
@@ -29,7 +29,7 @@ class State(ABC):
         pass
 
 class StateEdge(State):
-    def __init__(self, parent:State, action:BMEdge) -> None:
+    def __init__(self, parent:'StateEdge', action:BMEdge) -> None:
         super(StateEdge, self).__init__(parent, action);
         if (parent is not None):
             self.node = action.other_vert(parent.node)#self.__createNodeVertex()
@@ -102,7 +102,7 @@ class StateEdge(State):
         i:int;
         j:int;
         nextEdges = self.node.link_edges  # recover the linked EDGES
-        stateEdge: StateEdge;
+        stateEdge:StateEdge;
         print('number of children edges: {}, parent vertex: {}'.format(len(nextEdges), self.node));
         for j in range(len(nextEdges)):
             print('CURRENT ACTION/EDGE: {}, CURRENT VERTEX/NODE:{}, NEXT EDGE: {}, NEXT EDGE INDEX: {}'.format(self.action, self.node, nextEdges[j],nextEdges[j].index));
