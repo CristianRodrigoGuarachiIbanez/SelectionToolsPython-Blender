@@ -122,13 +122,13 @@ def __activateEdgesEDITMODE( edges:List[BMEdge]) -> None:
     # bm: BMesh = from_edit_mesh(self.__obj.data);
     i:int;
     currEdge:BMEdge;
-    for i in range(len(edges)):
-        for j in range(len(edges[i])):
-            print('index i:{}, indexj:{}, edges:{}'.format(i,j,edges[i][j]))
-            currEdge = edges[i][j];
-            currEdge.select=True;
-            bm.select_history.clear()
-            bm.select_history.add(currEdge)
+    for i in range(len(edges[0])):
+        #for j in range(len(edges[i])):
+        print('index i:{}, edges:{}'.format(i,edges[0][i]))
+        currEdge = edges[0][i];
+        currEdge.select=True;
+        bm.select_history.clear()
+        bm.select_history.add(currEdge)
     update_edit_mesh(obj.data)
 # --------- main
 
@@ -154,10 +154,11 @@ while(True): # endlose Schleife
     if (nextEdge.action == status.goal):
         visited.append(nextEdge.action.index);
         selectedEdges.append(nextEdge.action)
-        status = StateEdge(parent=status, action=nextEdge.action);
-        __randListe(status);
+        status = StateEdge(parent=status, action=nextEdge.action)
+        #save the goal edge
+        addEdges(status)
         print(' the goal EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge));
-        print(extendedNodes, selectedEdges);
+        actions.append(__extractStatesParents(status))
         break
     elif (nextEdge.action.index not in visited):
         start+=1;
@@ -185,10 +186,10 @@ while(True): # endlose Schleife
     __randListe(status);
     print('a new OBJECT CLASS STATUS was added into the list of EXTENDED NODES!');
     start += 1;
-    if (start == 30):
+    if (start == 70):
         actions.append(__extractStatesParents(status))
-        while not (extendedNodes.empty()):
-            actions.append(__extractStatesParents(extendedNodes.get()))
+        #while not (extendedNodes.empty()):
+            #actions.append(__extractStatesParents(extendedNodes.get()))
         break
 for action in actions:
     print(action)

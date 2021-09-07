@@ -214,8 +214,10 @@ class SelectionManager(Operator):
                 state = StateEdge(parent=state, action=nextEdge.action);
                 self.__selectedEdges.append(state.action);
                 print(' the goal EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge.action));
-                while not (self.__priorityQueue.empty()):
-                    actions.append(self.__priorityQueue.get().action);
+                #while not (self.__priorityQueue.empty()):
+                    #actions.append(self.__priorityQueue.get().action);
+                self.__addStatesToRandList(state)
+                actions.append(self.__extractStatesParents(state))
                 break;
             elif(nextEdge.action.index not in visited):
                 start+=1;
@@ -241,31 +243,37 @@ class SelectionManager(Operator):
             self.__randListe(state);
             print('a new OBJECT CLASS STATUS was added into the list of EXTENDED NODES!');
             start+=1;
-            if (start == 80):
+            if (start == 50):
                 actions.append(self.__extractStatesParents(state))
-                while not (self.__priorityQueue.empty()):
-                    actions.append(self.__extractStatesParents(self.__priorityQueue.get()));
+                #while not (self.__priorityQueue.empty()):
+                    #actions.append(self.__extractStatesParents(self.__priorityQueue.get()));
                 break;
         return actions
     def __activateEdgesEDITMODE(self,EDGES:List[List[BMEdge]]) -> None:
         #bm: BMesh = from_edit_mesh(self.__obj.data);
         i:int;
         currEdge:BMEdge=None;
-        for j in range(len(EDGES)):
-            for i in range(len(EDGES[j])):
-                currEdge = EDGES[j][i];
-                currEdge.select=True;
-                self.__bm.select_history.clear();
-                self.__bm.select_history.add(currEdge);
+        # for j in range(len(EDGES)):
+        #     for i in range(len(EDGES[j])):
+        #         currEdge = EDGES[j][i];
+        #         currEdge.select=True;
+        #         self.__bm.select_history.clear();
+        #         self.__bm.select_history.add(currEdge);
+        for i in range(len(EDGES[0])):
+            currEdge = EDGES[0][i]
+            currEdge.select=True;
+            self.__bm.select_history.clear();
+            self.__bm.select_history.add(currEdge);
         update_edit_mesh(self.__obj.data)
     def execute(self, context) -> Set[str]:
         actions:List[List[BMEdge]];
         self.__selectedEdges.clear()
         try:
             self.__setSelectedEdges()
+            assert(len(self.__selectedEdges)>0),'None Edge was selected, please select a edge in EDIT MODE'
             actions = self.__constructEdgePath()
             self.__activateEdgesEDITMODE(actions)
-            context.scene.long_string = '[Output Info]:{}'.format(len(actions))
+            context.scene.long_string = '[Output Info]:{}'.format(len(actions[0]))
             return {'FINISHED'}
         except Exception as e:
             self.report({'ERROR'}, e.args)
