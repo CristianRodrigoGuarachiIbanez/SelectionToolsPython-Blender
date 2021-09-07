@@ -1,0 +1,7 @@
+Using external IDE PyCharm for writing Blender scripts
+
+https://b3d.interplanety.org/en/using-external-ide-pycharm-for-writing-blender-scripts/
+
+
+
+https://github.com/ranjian0/Blender-PyCharm
