@@ -1,8 +1,4 @@
-from bmesh.types import BMElemSeq, BMEdgeSeq, BMFaceSeq, BMVertSeq
 from bmesh.types import BMVert, BMEdge, BMFace, BMesh, BMLoop
-from bpy import context
-from bpy.types import Object, Operator, Panel, ID
-from bmesh import from_edit_mesh, update_edit_mesh
 from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, DefaultDict
 from copy import deepcopy,copy
 from abc import ABCMeta, ABC
@@ -60,19 +56,26 @@ class StateEdge(State):
                 return self.goal
             else:
                 return self.parent.goal
-    def getScoreOfTheNextEdge(self) -> Tuple[BMEdge,float]:
-        """
-                iterate over the list of children excluding the edges that not meet the one/two criteria
-                :return: BMEdge
-        """
-        assert (len(self.children) > 0), "the children's list is empty"
-        closestValue:Tuple[StateEdge,float] = self.__getClosestValue(self.children);
-        self.children.remove(closestValue[0])
-        return closestValue[0].action, closestValue[1]
-    def calculateTheScore(self)->None:
-        currEdge:float = self.parent.action.calc_length()
-        nextEdge:float = self.goal.calc_length()
-        self.score = self.__getDistanceBetweenEdges(currEdge,nextEdge)
+    def __calcEdgeAngle(self, edge:BMEdge)->float:
+        angle:float=0.0
+        try:
+            angle = edge.calc_face_angle();
+        except Exception as e:
+            print('[Exception:]', e);
+            try:
+                angle = edge.calc_face_angle_signed();
+            except Exception as e:
+                print('[second Exception:]', e)
+        return angle
+    def calculateTheScore(self, angleScore:bool=False)->None:
+        currEdge:float=0.0;
+        nextEdge:float=0.0;
+        if(angleScore is True):
+            self.score = self.__getDistanceBetweenEdges(self.__calcEdgeAngle(self.parent.action), self.__calcEdgeAngle(self.goal))
+        else:
+            currEdge = self.parent.action.calc_length()
+            nextEdge = self.goal.calc_length()
+            self.score = self.__getDistanceBetweenEdges(currEdge,nextEdge)
     @staticmethod
     def __getClosestValue(nextEdges:List['StateEdge']) -> Tuple['StateEdge',float]:
         closestEdge:StateEdge = nextEdges[0];#
@@ -98,7 +101,7 @@ class StateEdge(State):
         else:
             vertices = [vert for vert in action.action.verts]
             return vertices.pop(0) # ------- > ändere das was hier zurückgeliefert wird
-    def createChildrenEdges(self) ->None:
+    def createChildrenEdges(self, scoreAngle:bool=False) ->None:
         i:int;
         j:int;
         nextEdges = self.node.link_edges  # recover the linked EDGES
@@ -109,7 +112,10 @@ class StateEdge(State):
             if (self.action.index == nextEdges[j].index):
                 continue;
             stateEdge = StateEdge(self, nextEdges[j]);
-            stateEdge.score = self.__getDistanceBetweenEdges(self.__checkGoalDefinition().calc_length(), nextEdges[j].calc_length())
+            if(scoreAngle is True):
+                stateEdge.score=self.__getDistanceBetweenEdges(self.__calcEdgeAngle(self.__checkGoalDefinition()), self.__calcEdgeAngle(nextEdges[j]))
+            else:
+                stateEdge.score = self.__getDistanceBetweenEdges(self.__checkGoalDefinition().calc_length(), nextEdges[j].calc_length())
             print('SCORE:', stateEdge.score)
             self.children.append(stateEdge);
         print('number of children edges after: {}'.format(len(self.children)))

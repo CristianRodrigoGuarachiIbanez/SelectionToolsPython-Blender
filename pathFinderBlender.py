@@ -191,7 +191,7 @@ class SelectionManager(Operator):
             i += 1
         return parents
     def __constructEdgePath(self) -> List[BMEdge]:
-        start: int = 0;
+        start:int = 0;
         visited: List[int] = self.__excludeDuplicates() # list of edge indices [False] * len(self.__selectedEdges)
         nextEdge:BMEdge;
         parentNode:bool;
