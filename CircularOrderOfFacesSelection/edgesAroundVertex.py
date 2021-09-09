@@ -9,7 +9,9 @@ from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, De
 from queue import PriorityQueue
 from abc import ABCMeta, ABC
 import bpy
-
+'''
+check https://b3d.interplanety.org/en/learning-loops/
+'''
 T:TypeVar = TypeVar('T', BMEdge, Generator)
 class EdgesAroundVertex:#(unittest.TestCase):
 
