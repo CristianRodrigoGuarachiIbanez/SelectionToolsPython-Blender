@@ -1,15 +1,12 @@
 
 # Data Structures in Blender
 
-**The data structures in Blender are accessible for python in the bmesh data structures. There could be found, at the most basic level, four main element structures:**
+**The data structures in Blender are accessible for python in the bmesh data structures. There could be found, at the most basic level, four main element structures:
 
-**- Faces**
-
-**- Loops (stores per-face-vertex data, uvs, vcols, etc)**
-
-**- Edges**
-
-**- Verts**
+- Faces
+- Loops (stores per-face-vertex data, uvs, vcols, etc)**
+- Edges
+- Verts**
 
 ## Vertices
 **Vertices store a coordinate and link to an edge in the disk cycle of the vertex (covered below).**
