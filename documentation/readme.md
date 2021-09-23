@@ -1,31 +1,42 @@
 
-# Data Structures in Blender
+# Datenstrukturen in Blender
 
-**The data structures in Blender are accessible for python in the bmesh data structures. There could be found, at the most basic level, four main element structures:
+Die Datenstrukturen in Blender sind für Python über die bmesh-Datenstrukturen zugänglich. Auf der grundlegendsten Ebene sind vier Hauptelementstrukturen zu finden:
 
-- Faces
-- Loops (stores per-face-vertex data, uvs, vcols, etc)**
-- Edges
-- Verts**
+- Faces oder Fläche
+- Loops (speichert Daten pro Fläche und Vertex, uvs, vcols, etc)**
+- Edges oder Kanten
+- Vertex oder Knoten
 
 ## Vertices
-**Vertices store a coordinate and link to an edge in the disk cycle of the vertex (covered below).**
+Diese Datenstruktur speichert eine Koordinate und verweist auf eine Kante im Plattenzyklus des Knotens (siehe unten).
 
-## Edges
-**Edges represent a connection between two vertices, but also store a link to a loop in the radial cycle of the edge (covered below).**
+## Edge
+Kanten stellen eine Verbindung zwischen zwei Knoten dar, speichern aber auch eine Verknüpfung zu einer Loop im radialen Zyklus der Kante (siehe unten).
 
-## Loops
-**Loops define the boundary loop of a face. Each loop logically corresponds to an edge, though the loop is local to a single face so there will usually be more than one loop per edge (except at boundary edges of the surface).**
+## Loop
+Eine Loop definiert die Begrenzungsschleife einer Fläche. Jede Loop entspricht logischerweise einer Kante, obwohl die Loop lokal auf eine einzelne Fläche beschränkt ist, so dass es normalerweise mehr als eine Loop pro Kante gibt (außer an den Begrenzungskanten der Oberfläche).
 
-### _Loops store several handy pointers_:
+### _Loops speichern mehrere praktische Zeiger_:
 
-**e - pointer to the loop's edge
-v - pointer to the vertex at the start of the edge (where "start" is defined by CCW order)
-f - pointer to the face associated with this loop.
-Loops store per-face-vertex data (amongst other things outlined later in this document).**
+e - Zeiger auf den Rand der Loop
+v - Zeiger auf den Knoten am Anfang der Kante (wobei "Anfang" durch die CCW-Reihenfolge definiert ist)
+f - Zeiger auf die mit dieser Loop verbundene Fläche.
+Loops speichern Daten pro Face-Vertex (neben anderen Dingen, die später in diesem Dokument beschrieben werden).
 
 ## Faces
-**Faces link to a loop in the loop cycle, the circular linked list of loops defining the boundary of the face.**
+Die Flächen verweisen auf eine Loop im Schleifenzyklus, welcher die Circular-Linked-List von Loops ist und die Begrenzung der Fläche definiert.
 
 
-The mesh data is accessed in object mode and intended for compact storage, for more flexible mesh editing from python see
+# Konnektivitäts-Zyklen (Connectivity Cycles)
+Die BMesh-Datenstruktur hat die folgenden Merkmale:
+- Dauerhafte Adjazenzinformationen
+- Lokal modifizierbare Topologie
+- Flächen von beliebiger Länge (N-Gons)
+- stellt trivialerweise jede nicht-verzweigte Bedingung dar, einschließlich Drahtkanten (wire edges).
+
+Die zweite bis vierte Eigenschaft hängen alle von der ersten ab, und daher ist das System, das diese Möglichkeit bietet, die Grundlage der bmesh-Datenstruktur. Persistente Adjazenzinformationen werden in einem System von doppelt verknüpften zirkulären Listen gespeichert, die die Beziehungen zwischen den topologischen Einheiten aufrechterhalten. Diese Listen sind konzeptionell identisch mit denen anderer Randdarstellungen wie Half-Edge, Radial Edge und Partial Entity, und wie bei diesen anderen Darstellungen ist jede topologische Einheit selbst ein Knoten in den Zyklen, zu denen sie gehört, so dass der Speicherbedarf für die Speicherung von Adjazenzinformationen minimal bleibt.
+
+Die Verbindungen zwischen den Elementen werden durch Schleifen um topologische Einheiten definiert, die als Zyklen bezeichnet werden. Die Basis eines jeden Zyklus ist die Entität, für die der Zyklus Adjazenzabfragen beantworten soll. Ein Zyklus zur Beantwortung der Frage "Welche Kanten teilen sich diesen Knoten?" würde beispielsweise den Knoten selbst als Basis und seine Kanten als Knoten des Zyklus haben. Beachten Sie, dass es nicht erforderlich ist, alle möglichen Adjazenzbeziehungen explizit zu speichern, und dass vollständige Konnektivitätsinformationen schnell abgeleitet werden können, wenn zwei oder mehr Zyklen in Verbindung miteinander verwendet werden.
+
+Die drei explizit in der bmesh-Struktur gespeicherten Zyklen sind der Scheibenzyklus, der radiale Zyklus und der Schleifenzyklus. Nachfolgend werden die Eigenschaften jedes Zyklus und eine Liste von Funktionen für den Umgang mit ihnen aufgeführt. Es ist wichtig zu beachten, dass die mit einem Sternchen (*) gekennzeichneten Funktionen nicht Teil der Mesh Tools API sind und nur vom Modellierungskernel verwendet werden. Außerdem wurden bei der Auflistung von Strukturdefinitionen bestimmte Mitglieder aus Gründen der Übersichtlichkeit weggelassen.
