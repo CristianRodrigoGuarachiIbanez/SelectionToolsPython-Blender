@@ -1,10 +1,10 @@
 # Selection Tools for Blender with Python
 **this project was developed to implement a A* Search Algorithm as a extension of the selection tools in blender. The selection algorithm was written in pure python with the version 3.9.2 and was tested in blender 2.9.3.
 The core of this algorithm is the implementation of a pure pythonic data structure to handle the gathered blender specific data structures like Vertices, Loops, Edges or Faces. This data structure represents the current status to be expanded in a A* Algorithm and provides a handy way to compare expanded states and order them in a priority queue.  
-![ selection manager ](selection_manager_test.mp4)
+Explanation Video [ selection manager ](selection_manager_test.mp4)
 
 <video width="320" height="240" controls>
-  <source src="selection_manager_test.mp4" type="video/mp4">
+  <source src="./selection_manager_test.mp4" type="video/mp4">
 </video>
 
 ## Installation 
@@ -25,6 +25,10 @@ dir: str = dirname(data.filepath)
 if(path !=dir):
     chdir(path)
 ```
-
+## dependencies 
+read more about the bpy and bmesh API in the [_documentation_](./documentation)
 ## How to use it 
-**see the file _documentation.txt_ above**
+- To run any of the algorithm, the file [panelSelectionTools.py](panelSelectionTools.py) should be open and the corresponding _bl_idname_ selected and insert in the operator 
+function the draw method.
+- After that in blender from the *Text Editor*, the path to the file _main.py_ has to be chosen. 
+- Run main.py file  
