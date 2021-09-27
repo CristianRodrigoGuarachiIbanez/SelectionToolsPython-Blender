@@ -35,7 +35,6 @@ Jedes Element (Vertex/Edge/Loop/Face) in einem Netz hat ein zugehöriges dauerha
 
 # Konnektivitäts-Zyklen (Connectivity Cycles)
 Die BMesh-Datenstruktur hat die folgenden Merkmale:
-- Dauerhafte Adjazenzinformationen
 - Lokal modifizierbare Topologie
 - Flächen von beliebiger Länge (N-Gons)
 - stellt trivialerweise jede nicht-verzweigte Bedingung dar, einschließlich Drahtkanten (wire edges).
