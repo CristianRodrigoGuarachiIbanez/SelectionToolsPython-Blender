@@ -11,7 +11,7 @@ When a python script inside Blender is excecuted, the current working directory 
 
 The current .blend filepath could be also returned using bpy.data.filepath, from which it is possible to construct relative paths, or switch pythons working directory. if that's more convenient (remember to switch it back )
 ```python
-path:str = "/home/cristian/PycharmProjects/SelectionAlgorithm"
+path:str = "/local/path/to/working_directory"
 dir: str = dirname(data.filepath)
 if(path !=dir):
     chdir(path)
