@@ -1,15 +1,11 @@
-from bpy.props import StringProperty
-
-from bmesh.types import BMElemSeq, BMEdgeSeq, BMFaceSeq, BMVertSeq
-from bmesh.types import BMVert, BMEdge, BMFace, BMesh, BMLoop
+from bmesh.types import BMVert, BMEdge, BMesh
 from bpy import context
-from bpy.types import Object, Operator, Panel, ID
+from bpy.types import Object, Panel
 from bmesh import from_edit_mesh, update_edit_mesh
-from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, DefaultDict
+from typing import List, Tuple, Any, Set
 from collections import defaultdict
 from mathutils import Vector
-from logging import info, INFO
-from stateEdges import StateEdge
+from state_edge.stateEdges import StateEdge
 from queue import PriorityQueue
 
 

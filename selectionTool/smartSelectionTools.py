@@ -7,6 +7,7 @@ from bmesh import from_edit_mesh, update_edit_mesh
 from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, DefaultDict, Reversible
 from queue import PriorityQueue
 from abc import ABCMeta, ABC
+#from .circularOrderOfFacesSelection.edgesSurroundingSelector import EdgesSurroundingSelector
 import bpy
 
 class State(ABC):
@@ -262,7 +263,7 @@ class SelectionManager(Operator):
             self.__randListe(state);
             print('a new OBJECT CLASS STATUS was added into the list of EXTENDED NODES!');
             start+=1;
-            if (start == 50):
+            if (start == 1000):
                 actions.append(self.__extractStatesParents(state))
                 #while not (self.__priorityQueue.empty()):
                     #actions.append(self.__extractStatesParents(self.__priorityQueue.get()));
@@ -298,6 +299,107 @@ class SelectionManager(Operator):
             self.report({'ERROR'}, e.args)
             return {'CANCELLED'}
 
+T:TypeVar = TypeVar('T', BMEdge, BMLoop, Generator)
+class EdgesSurroundingSelector(Operator):
+    bl_idname: str = 'surrounding.selector';
+    bl_label: str = 'surrounding faces selector';
+    bl_options: Set[str] = {'REGISTER', 'UNDO'};
+    bm: BMesh;
+    def __init__(self)->None:
+        self.obj: Object = context.object;
+        self.selectedEdges: List[BMEdge] = list()
+    def collectSelectedEdge(self)->BMVert:
+
+        length: int
+        if (self.obj.mode == 'EDIT'):
+            self.bm = from_edit_mesh(self.obj.data)
+            length = len(self.bm.edges)
+            print(self.bm.edges)
+            # for i, v in enumerate(bm.verts):
+            # assert(length <=3), "there could be more than 3 Edges selected"
+            for i in range(length):
+                # print('Nicht selected edges: {}'.format(bm.edges[i]))
+                if (self.bm.edges[i].select):
+                    print('selected edges: {}'.format(self.bm.edges[i]))
+                    self.selectedEdges.append(self.bm.edges[i])
+        else:
+            print("Object is not in edit mode.")
+        return self.selectedEdges[0].verts[0]
+
+    def connectedEdgesFromVertex_CCW(self, vertex:BMVert)->List[BMLoop]:
+        '''
+        Return edges around param vertex in counter-clockwise order
+        :param vertex: start vertex
+        :return: a list of BMEdge
+        '''
+        vertex.link_edges.index_update()
+        # first_edge:BMEdge = vertex.link_edges[0]
+        first_edge:BMLoop= vertex.link_loops[0]
+        edges_CCW_order:List[BMLoop] = []
+
+        edge:T = first_edge
+        while(edge not in edges_CCW_order):
+            edges_CCW_order.append(edge)
+            try:
+                edge = self.__rightEdgeForEdgeRegardToVertex(edge, vertex)
+                edge = next(edge);
+                print(edge)
+            except StopIteration as s:
+                print('[INFO:]', s)
+
+        return edges_CCW_order
+    @staticmethod
+    def __rightEdgeForEdgeRegardToVertex(edge:BMLoop, vertex:BMVert)->Generator:
+        '''
+         Yield the right edge of param edge regard to param vertex
+        :param edge: last selected BMEdge
+        :param vertex: start Vertex
+        :return: a BMEdge
+        '''
+        right_loop:BMLoop = None
+        loops:BMElemSeq = edge.edge.link_loops
+        print(len(loops))
+        for i in range(len(loops)):
+            if (loops[i].vert == vertex):
+                right_loop = loops[i]
+                print(right_loop.link_loop_prev)
+                yield right_loop.link_loop_prev
+    @staticmethod
+    def __loopsToFace(loops:List[BMLoop])->List[BMFace]:
+        faces:List[BMFace]=list()
+        for i in range(len(loops)):
+            faces.append(loops[i].face)
+        return faces
+    def __changeSelectionMode(self)->None:
+        sel_mode = context.tool_settings.mesh_select_mode
+        if (sel_mode[1] or sel_mode[2]):  # edge or face
+            bpy.ops.mesh.select_mode(type='FACE')
+        else:  # face
+            bpy.ops.mesh.select_mode(type='FACE')
+    def activateEdgesEDITMODE(self) -> None:
+        # bm: BMesh = from_edit_mesh(self.__obj.data);
+        i: int;
+        loops: List[BMLoop] = self.connectedEdgesFromVertex_CCW(self.collectSelectedEdge())
+        edges:List[BMFace] = self.__loopsToFace(loops)
+        currEdge: BMEdge = None
+        for i in range(len(edges)):
+            # for j in range(len(edges[i])):
+            print('index i:{}, edges:{}'.format(i, edges[i]))
+            currEdge = edges[i];
+            currEdge.select = True;
+            self.bm.select_history.clear()
+            self.bm.select_history.add(currEdge)
+            self.__changeSelectionMode()
+        update_edit_mesh(self.obj.data)
+    def execute(self, context) -> Set[str]:
+        actions:List[List[BMEdge]];
+        try:
+            self.activateEdgesEDITMODE()
+            #context.scene.long_string = '[Output Info]:{}'.format(len(self.selectedEdges[0]))
+            return {'FINISHED'}
+        except Exception as e:
+            self.report({'ERROR'}, e.args)
+            return {'CANCELLED'}
 class PANEL_PT_SelectionTools(Panel):
     bl_idname: str = 'PANEL_PT_SelectionTools'
     bl_label: str = 'Selection_Tools'
@@ -307,7 +409,7 @@ class PANEL_PT_SelectionTools(Panel):
 
     def draw(self, context) -> None:
         row_action_1_btn = self.layout.row()
-        row_action_1_btn.operator('selection.manager', icon='WORLD_DATA', text='Run CBS-BL')
+        row_action_1_btn.operator('selection.manager', icon='WORLD_DATA', text='Run Select Tool')
 
         # Text area
         row_text = self.layout.row()
@@ -315,7 +417,7 @@ class PANEL_PT_SelectionTools(Panel):
         row_text.label(text=text, icon='WORLD_DATA')
         # -------- second button
         row_action_2_btn = self.layout.row()
-        row_action_2_btn.operator('selection.manager', text='Run CBS-AB')
+        row_action_2_btn.operator('surrounding.selector', text='Run Select Surrounding')
 
         row_text1 = self.layout.row()
         text1 = context.scene.long_string

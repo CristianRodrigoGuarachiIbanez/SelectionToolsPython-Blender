@@ -7,7 +7,7 @@ from bpy.types import Object, Operator, Panel, ID
 from bmesh import from_edit_mesh, update_edit_mesh
 from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, DefaultDict, Reversible
 from queue import PriorityQueue
-from stateEdges import StateEdge
+from state_edge.stateEdges import StateEdge
 from abc import ABCMeta, ABC
 import bpy
 

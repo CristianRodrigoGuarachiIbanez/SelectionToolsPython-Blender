@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-import bpy
+
 from bpy.types import Panel
 
 class PANEL_PT_SelectionTools(Panel):
-    bl_idname = 'PANEL_PT_SelectionTools'
-    bl_label = 'Selection_Tools'
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = 'Panel Selection Tools'
+    bl_idname: str = 'PANEL_PT_SelectionTools'
+    bl_label: str = 'Selection_Tools'
+    bl_space_type: str = 'VIEW_3D'
+    bl_region_type: str = 'UI'
+    bl_category: str = 'Panel Selection Tools'
 
-    def draw(self, context):
+    def draw(self, context) -> None:
         row_action_1_btn = self.layout.row()
-        row_action_1_btn.operator('mesh.text', icon='WORLD_DATA', text='Print Values')
+        row_action_1_btn.operator('selection.manager', icon='WORLD_DATA', text='Run Path Search')
 
         # Text area
         row_text = self.layout.row()

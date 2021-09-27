@@ -1,26 +1,24 @@
 #!/usr/bin/env python3
-# This is a sample Python script.
 
-# Press Umschalt+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 from bpy.props import StringProperty
-from bpy.utils import register_class, unregister_class
-from bpy.types import Scene
 from bpy import data
 from typing import List, Dict
 from os.path import dirname
+from os import chdir
 import bpy
 import sys
 
+path:str = "/home/cristian/PycharmProjects/SelectionAlgorithm"
 dir: str = dirname(data.filepath)
-if not (dir in sys.path):
-    sys.path.append(dir)
-else:
-    pass
+if(path !=dir):
+    if not (path in sys.path):
+        sys.path.append(path)
+        chdir(path)
+    else:
+        pass
 
-from viewPrinter import MESH_TxtPrinter
+from selectionModeManager import SelectionManager
 from panelSelectionTools import PANEL_PT_SelectionTools
-
 
 bl_info: Dict[str, str] = {
     "name": "Textbox",
@@ -34,17 +32,16 @@ bl_info: Dict[str, str] = {
 
 
 def register() -> None:
-    bpy.utils.register_class(MESH_TxtPrinter)
+    bpy.utils.register_class(SelectionManager)
     bpy.utils.register_class(PANEL_PT_SelectionTools)
     bpy.types.Scene.long_string = StringProperty(name='long_string', default='')
 
 
-def unregister()-> None:
-    bpy.utils.unregister_class(MESH_TxtPrinter)
+def unregister() -> None:
+    bpy.utils.unregister_class(SelectionManager)
     bpy.utils.unregister_class(PANEL_PT_SelectionTools)
     del bpy.types.Scene.long_string
 
 
 if __name__ == "__main__":
-    register()
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    register();

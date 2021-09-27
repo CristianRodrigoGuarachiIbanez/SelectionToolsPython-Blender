@@ -10,7 +10,7 @@ from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, De
 from collections import defaultdict
 from mathutils import Vector
 from logging import info, INFO
-from stateEdges import StateEdge
+from state_edge.stateEdges import StateEdge
 from queue import PriorityQueue
 from numpy import ndarray, asarray, abs as absolut, array
 import sys

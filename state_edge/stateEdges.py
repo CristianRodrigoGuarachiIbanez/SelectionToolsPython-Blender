@@ -1,8 +1,6 @@
 from bmesh.types import BMVert, BMEdge, BMFace, BMesh, BMLoop
 from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, DefaultDict
-from copy import deepcopy,copy
 from abc import ABCMeta, ABC
-
 class State(ABC):
     def __init__(self, parent:'StateEdge', action:BMEdge) -> None:
         self.children:List[BMEdge] = [];
