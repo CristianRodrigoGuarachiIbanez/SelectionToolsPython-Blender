@@ -10,13 +10,12 @@ The core of this algorithm is the implementation of a pure pythonic data structu
 When a python script inside Blender is excecuted, the current working directory is not the base directory of the .blend file. Therefore, it should be reseted in order to import diffent modules locally. One way to do that is simply by importing os and printing os.getcwd() and changing it to the current working directory with os.chdir(). That will tell blender where it should find these modules which are tried to be imported in the main.py file.
 
 The current .blend filepath could be also returned using bpy.data.filepath, from which it is possible to construct relative paths, or switch pythons working directory. if that's more convenient (remember to switch it back )
-
-'''python
+```python
 path:str = "/home/cristian/PycharmProjects/SelectionAlgorithm"
 dir: str = dirname(data.filepath)
 if(path !=dir):
     chdir(path)
-'''
+```
 
 ## How to use it 
 **see the file _documentation.txt_ above**
