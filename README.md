@@ -25,7 +25,7 @@ dir: str = dirname(data.filepath)
 if(path !=dir):
     chdir(path)
 ```
-## dependencies 
+## Dependencies 
 read more about the bpy and bmesh API in the [_documentation_](./documentation)
 ## How to use it 
 - To run any of the algorithm, the file [panelSelectionTools.py](panelSelectionTools.py) should be open and the corresponding _bl_idname_ selected and insert in the operator 

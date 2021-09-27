@@ -10,23 +10,25 @@ Die Datenstrukturen in Blender sind für Python über die bmesh-Datenstrukturen 
 
 ## Vertices
 Diese Datenstruktur speichert eine Koordinate und verweist auf eine Kante im Plattenzyklus des Vertex (siehe unten).
-
+![Vertices](vertices.jpg)
 ## Edge
 Edges stellen eine Verbindung zwischen zwei Knoten dar, speichern aber auch eine Verknüpfung zu einer Loop im radialen Zyklus der Edge (siehe unten).
 
 ## Loop
 Eine Loop definiert die Begrenzungsschleife einer Face. Jede Loop entspricht logischerweise einer Kante, obwohl die Loop lokal auf eine einzelne Fläche beschränkt ist, so dass es normalerweise mehr als eine Loop pro Edge gibt (außer an den Begrenzungskanten der Oberfläche).
-
-### _Loops speichern mehrere praktische Zeiger_:
+![Loops](loops.jpg)
+### _Loops speichern mehrere praktischen Zeiger:
 
 e - Zeiger auf den Rand der Loop
+
 v - Zeiger auf den Vertex am Anfang der Edge (wobei "Anfang" durch die CCW-Reihenfolge definiert ist)
-f - Zeiger auf die mit dieser Loop verbundene Fläche.
-Loops speichern Daten pro Face-Vertex (neben anderen Dingen, die später in diesem Dokument beschrieben werden).
+
+f - Zeiger auf die mit dieser Loop verbundene Fläche. Loops speichern Daten pro Face-Vertex (neben anderen Dingen, die später in diesem Dokument beschrieben werden).
 
 ## Faces
 Die Flächen verweisen auf eine Loop im Schleifenzyklus, welcher die Circular-Linked-List von Loops ist und die Begrenzung der Face definiert.
 
+![faces](faces2.jpeg.crdownload)
 ## Persistente Flaggen
 Jedes Element (Vertex/Edge/Loop/Face) in einem Netz hat ein zugehöriges dauerhaftes Bitfeld. Diese Flags speichern Informationen wie die Sichtbarkeit des Elements oder seinen Auswahlstatus.
 
