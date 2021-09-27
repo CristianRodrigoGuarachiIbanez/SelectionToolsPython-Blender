@@ -1,7 +1,7 @@
-#BMesh-Modul (bmesh)
+#  BMesh-Modul (bmesh)
 Dieses Modul ermöglicht den Zugriff auf Blenders bmesh-Datenstrukturen.
 
-##Einführung
+## Einführung
 Hierbei handelt es sich um API, welche den Zugriff auf die Blender-interne Mesh-Editing-API ermöglicht. Diese enthält Geometriekonnektivitätsdaten und Zugriff auf Editieroperationen wie Split, Separate, Collapse und Dissolve.
 Die dargestellten Features sind eng an die C-API angelehnt und geben Python Zugriff auf die Funktionen, die von Blenders eigenen Mesh-Editing-Tools verwendet werden.
 
