@@ -24,7 +24,11 @@ if (obj.mode == 'EDIT'):
         # print('Nicht selected edges: {}'.format(bm.edges[i]))
         if (bm.edges[i].select):
             print('selected edges: {}'.format(bm.edges[i]))
-            selectedEdges.append(bm.edges[i])
+            # selectedEdges.append(bm.edges[i])
+            vertices = bm.edges[i].verts
+            for j in range(len(vertices)):
+                print("Index {}, values{}".format(j,vertices[j]))
+                selectedEdges.append(vertices[j])
 else:
     print("Object is not in edit mode.")
 

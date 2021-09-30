@@ -1,6 +1,6 @@
 bl_info = {
-    "name": "Multiple operator example",
-    "author": "Robert Guetzkow",
+    "name": "Selection Mode Manger",
+    "author": "Cristian Guarachi Ibanez",
     "version": (1, 0),
     "blender": (2, 80, 0),
     "location": "View3D > Sidebar > My own addon",

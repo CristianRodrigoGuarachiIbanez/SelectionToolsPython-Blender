@@ -342,8 +342,9 @@ class EdgesSurroundingSelector(Operator):
             edges_CCW_order.append(edge)
             try:
                 edge = self.__rightEdgeForEdgeRegardToVertex(edge, vertex)
+                print("GENERATOR:", edge)
                 edge = next(edge);
-                print(edge)
+                print("GENERATOR RESULT:",edge)
             except StopIteration as s:
                 print('[INFO:]', s)
 
@@ -357,12 +358,12 @@ class EdgesSurroundingSelector(Operator):
         :return: a BMEdge
         '''
         right_loop:BMLoop = None
-        loops:BMElemSeq = edge.edge.link_loops
-        print(len(loops))
+        loops:BMElemSeq = edge.link_loops
+        print("LINKED LOOP:",len(loops))
         for i in range(len(loops)):
             if (loops[i].vert == vertex):
                 right_loop = loops[i]
-                print(right_loop.link_loop_prev)
+                print("LOOP:",right_loop.link_loop_prev)
                 yield right_loop.link_loop_prev
     @staticmethod
     def __loopsToFace(loops:List[BMLoop])->List[BMFace]:
@@ -437,12 +438,14 @@ bl_info: Dict[str, str] = {
 
 def register() -> None:
     bpy.utils.register_class(SelectionManager)
+    bpy.utils.register_class(EdgesSurroundingSelector)
     bpy.utils.register_class(PANEL_PT_SelectionTools)
     bpy.types.Scene.long_string = StringProperty(name='long_string', default='')
 
 
 def unregister() -> None:
     bpy.utils.unregister_class(SelectionManager)
+    bpy.utils.unregister_class(EdgesSurroundingSelector)
     bpy.utils.unregister_class(PANEL_PT_SelectionTools)
     del bpy.types.Scene.long_string
 
