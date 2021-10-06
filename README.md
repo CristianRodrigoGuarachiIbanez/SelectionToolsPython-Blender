@@ -8,16 +8,10 @@ Explanation Video [ selection manager ](selection_manager_test.mp4)
 </video>
 
 ## Installation 
-<<<<<<< HEAD
-- The first step to running the set of algorithms is installing or updating Python on the local computer. There are a multitude of installation methods: you can download official Python distributions from [Python.org](https://www.python.org/), install from a package manager, and even install specialized distributions for scientific computing, Internet of Things, and embedded systems. A very comprehensive Tutorial to install python could be found [here](https://realpython.com/installing-python/).
-
-- After installing and setting up Python, the blender installation could be done following the instruction on the [documentation](https://docs.blender.org/manual/en/latest/getting_started/installing/index.html)**
-=======
 - The first step to running the set of algorithms is installing or updating Python on the local computer. There are a multitude of installation methods, which could be followed to install the last version of Python. For instance, it could be downloaded from the official Python distributions [Python.org](https://www.python.org/), installed from a package manager, and even using specialized distributions for scientific computing, Internet of Things, and embedded systems. A very comprehensive Tutorial to install python could be found [here](https://realpython.com/installing-python/).
 
 - The next step ist installing the last version of blender. The blender installation could be done following the instruction on the [documentation](https://docs.blender.org/manual/en/latest/getting_started/installing/index.html)**
-- 
->>>>>>> 3585316c9bc52bb2241506cb106bbfb5c546caec
+
 ## Set up the working directory:
 When a python script inside Blender is excecuted, the current working directory is not the base directory of the .blend file. Therefore, it should be reseted in order to import diffent modules locally. One way to do that is simply by importing os and printing os.getcwd() and changing it to the current working directory with os.chdir(). That will tell blender where it should find these modules which are tried to be imported in the main.py file.
 
