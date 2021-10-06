@@ -1,6 +1,6 @@
 # Selection Tools for Blender with Python
 **this project was developed to implement a A* Search Algorithm as a extension of the selection tools in blender. The selection algorithm was written in pure python with the version 3.9.2 and was tested in blender 2.9.3.
-The core of this algorithm is the implementation of a pure pythonic data structure to handle the gathered blender specific data structures like Vertices, Loops, Edges or Faces. This data structure represents the current status to be expanded in a A* Algorithm and provides a handy way to compare expanded states and order them in a priority queue.  
+The core of this algorithm is the implementation of a pure pythonic way to handle a set of blender specific data structures like Vertices, Loops, Edges or Faces. This set of data structures are considered to be nodes or states, which  are expected to be expanded in as in a A* Algorithm. The current implementation provides a handy way to compare expanded states and order them in a priority queue.  
 Explanation Video [ selection manager ](selection_manager_test.mp4)
 
 <video width="320" height="240" controls>
