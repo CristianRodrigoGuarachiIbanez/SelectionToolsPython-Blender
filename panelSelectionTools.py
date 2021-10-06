@@ -18,7 +18,7 @@ class PANEL_PT_SelectionTools(Panel):
         row_text.label(text=text, icon='WORLD_DATA')
         # -------- second button
         row_action_2_btn = self.layout.row()
-        row_action_2_btn.operator('surrounding.selector', text='Run Select Surrounding')
+        row_action_2_btn.operator('surrounding.selector', text='Run Select Surroundings')
 
         row_text1 = self.layout.row()
         text1 = context.scene.long_string

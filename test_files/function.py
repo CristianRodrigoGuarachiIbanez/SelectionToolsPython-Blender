@@ -11,7 +11,8 @@ from queue import PriorityQueue
 
 # --------------------------- select the edge
 obj: Object = context.object;
-selectedEdges: List[BMEdge] = list()
+selectedEdges:List[BMEdge] = list()
+selectedVertex:List[BMVert] =list()
 bm: BMesh
 length: int
 if (obj.mode == 'EDIT'):
@@ -24,11 +25,11 @@ if (obj.mode == 'EDIT'):
         # print('Nicht selected edges: {}'.format(bm.edges[i]))
         if (bm.edges[i].select):
             print('selected edges: {}'.format(bm.edges[i]))
-            # selectedEdges.append(bm.edges[i])
+            selectedEdges.append(bm.edges[i])
             vertices = bm.edges[i].verts
             for j in range(len(vertices)):
                 print("Index {}, values{}".format(j,vertices[j]))
-                selectedEdges.append(vertices[j])
+                selectedVertex.append(vertices[j])
 else:
     print("Object is not in edit mode.")
 
