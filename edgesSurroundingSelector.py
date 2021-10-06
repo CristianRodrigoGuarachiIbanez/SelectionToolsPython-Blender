@@ -1,22 +1,41 @@
 from bpy.props import StringProperty
 from bmesh.types import BMElemSeq, BMEdgeSeq, BMFaceSeq, BMVertSeq
 from bmesh.types import BMVert, BMEdge, BMFace, BMesh, BMLoop
-from bpy import context
+from bpy import context, data
 from bpy.utils import register_class, unregister_class
 from bpy.types import Object, Operator, Panel, ID
 from bmesh import from_edit_mesh, update_edit_mesh
 from typing import List, Tuple, Dict, TypeVar, Generator, Callable, Set, DefaultDict, Reversible
 import bpy
+from os import getcwd, chdir
+from os.path import dirname
+import sys
+# reload(splitext(basename(__file__))[0])
+path:str = r"C:\Users\Image Instruments\PycharmProjects/SelectionToolsPython-Blender"
+dir: str = dirname(data.filepath)
+if(path !=dir):
+    chdir(path)
+    if not (path in sys.path):
+        sys.path.append(path)
+    else:
+        pass
+print(getcwd())
+from facesSelectionManager import FacesSelectionManager as FSManager
+
 T:TypeVar = TypeVar('T', BMEdge, BMLoop, Generator)
 class EdgesSurroundingSelector(Operator):
     bl_idname: str = 'surrounding.selector';
     bl_label: str = 'surrounding faces selector';
     bl_options: Set[str] = {'REGISTER', 'UNDO'};
     bm: BMesh;
+    _EDGEs:List[BMEdge];
+    _VERTEx:List[BMVert];
+    _FSM:FSManager;
     def __init__(self)->None:
         self.obj: Object = context.object;
-        #self.selectedEdges: Set[BMElemSeq] = set()
-        self.selectedEdges:List[BMElemSeq] = list()
+        self._EDGEs = list()
+        self._VERTEx = list()
+        self._FSM = FSManager()
     def __collectSelectedEdge(self)->List[BMVert]:
         vertices:BMElemSeq;
         length: int
@@ -24,19 +43,16 @@ class EdgesSurroundingSelector(Operator):
             self.bm = from_edit_mesh(self.obj.data)
             length = len(self.bm.edges)
             print(self.bm.edges)
-            # for i, v in enumerate(bm.verts):
-            # assert(length <=3), "there could be more than 3 Edges selected"
             for i in range(length):
-                # print('Nicht selected edges: {}'.format(bm.edges[i]))
                 if (self.bm.edges[i].select):
-                    print('selected edges: {}'.format(self.bm.edges[i].verts))
+                    print('selected EDGES: {}'.format(self.bm.edges[i]))
+                    self._FSM.setLoops(self.bm.edges[i])
                     vertices = self.bm.edges[i].verts
                     for j in range(len(vertices)):
-                        #self.selectedEdges.add(vertices[j])
-                        self.selectedEdges.append(vertices[j])
+                        self._VERTEx.append(vertices[j])
         else:
             print("Object is not in edit mode.")
-        return self.selectedEdges
+        return self._VERTEx
     def linkedLoops(self)->List[BMLoop]:
         # first_edge:BMEdge = vertex.link_edges[0]
         vertices: List[BMElemSeq] = list(self.__collectSelectedEdge())
@@ -50,11 +66,13 @@ class EdgesSurroundingSelector(Operator):
             for j in range(len(loop)):
                 loopsList.add(loop[j])
         return list(loopsList)
-
+    def linkedLoopsTop(self)->List[BMLoop]:
+        self.__collectSelectedEdge()
+        self._FSM.recoverNextLoop()
+        return self._FSM.getLoops()
     def __loopsToFace(self)->List[BMFace]:
-        #faces:Set[BMFace]=set()
         faces:List[BMFace]=list()
-        loops:List[BMLoop] = self.linkedLoops()
+        loops:List[BMLoop] = self.linkedLoopsTop()
         for i in range(len(loops)):
             faces.append(loops[i].face)
         return faces
@@ -71,14 +89,13 @@ class EdgesSurroundingSelector(Operator):
         #faces:List[BMEdge]=[loop.edge for loop in self.linkedLoops()]
         currFace:BMEdge;
         for i in range(len(faces)):
-            print('index i:{}, edges:{}'.format(i, faces[i]))
+            print('index i:{}, face:{}'.format(i, faces[i]))
             currFace = faces[i];
             currFace.select = True;
             self.bm.select_history.clear()
             self.bm.select_history.add(currFace)
             self.__changeSelectionMode()
         update_edit_mesh(self.obj.data)
-
     def execute(self, context) -> Set[str]:
         actions:List[List[BMEdge]];
         try:

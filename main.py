@@ -10,7 +10,7 @@ from bpy.types import Scene
 
 import sys
 # reload(splitext(basename(__file__))[0])
-path:str = "/home/cristian/PycharmProjects/SelectionAlgorithm"
+path:str = r"C:\Users\Image Instruments\PycharmProjects/SelectionToolsPython-Blender"
 dir: str = dirname(data.filepath)
 if(path !=dir):
     chdir(path)
