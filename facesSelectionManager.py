@@ -1,9 +1,5 @@
 
-from bmesh.types import BMElemSeq, BMEdgeSeq, BMFaceSeq, BMVertSeq
 from bmesh.types import BMVert, BMEdge, BMFace, BMesh, BMLoop
-from bpy import context
-from bpy.types import Object, Operator, Panel, ID
-from bmesh import from_edit_mesh, update_edit_mesh
 from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, DefaultDict, Reversible
 from radialLoopSelector import RadialLoopSelector as RLSelector
 
@@ -13,8 +9,10 @@ class FacesSelectionManager(object):
         self._listOfLoops = list()
     def getLoops(self)->BMLoop:
         return self._listOfLoops
-    def setLoops(self, edge:BMEdge)->None:
+    def setLoops(self, edge:BMEdge, left:bool=True)->None:
         RLM:RLSelector= RLSelector(edge)
+        if(left is False):
+            self._listOfLoops.append(RLM.rightLoop())
         self._listOfLoops.append(RLM.leftLoop())
     def nextLoopFromList(self, index:int)->BMLoop:
         return self._listOfLoops[index].link_loop_next
@@ -50,8 +48,8 @@ class FacesSelectionManager(object):
                     print("next next loop:", listOfLoops[i+1])
                     if(nextLoop.index == listOfLoops[i+1].index):
                         break
-
                 if not (nextLoop.vert==vertexDir):
                     print("Something went wrong")
+                    break
 
 

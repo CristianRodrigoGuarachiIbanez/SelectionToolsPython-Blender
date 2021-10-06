@@ -21,8 +21,9 @@ if(path !=dir):
 print(getcwd())
 from selectionModeManager import SelectionManager
 from panelSelectionTools import PANEL_PT_SelectionTools
-from edgesSurroundingSelector import EdgesSurroundingSelector
-import edgesSurroundingSelector, panelSelectionTools, selectionModeManager
+from leftLoopsSelector import LeftLoopsSelector
+from rightLoopsSelector import RightLoopsSelector
+import leftLoopsSelector, panelSelectionTools, selectionModeManager
 
 bl_info: Dict[str, str] = {
     "name": "Textbox",
@@ -33,14 +34,14 @@ bl_info: Dict[str, str] = {
     "description": "Selection Tools Addon",
     "category": "Development",
 }
-
 def register() -> None:
     try:
         register_class(SelectionManager)
-        register_class(EdgesSurroundingSelector)
+        register_class(LeftLoopsSelector)
+        register_class(RightLoopsSelector)
         register_class(PANEL_PT_SelectionTools)
     except ValueError or RuntimeError:
-        reload(edgesSurroundingSelector)
+        reload(leftLoopsSelector)
         reload(selectionModeManager)
         reload(panelSelectionTools)
 
@@ -48,7 +49,8 @@ def register() -> None:
 
 def unregister() -> None:
     unregister_class(SelectionManager)
-    unregister_class(EdgesSurroundingSelector)
+    unregister_class(RightLoopsSelector)
+    unregister_class(LeftLoopsSelector)
     unregister_class(PANEL_PT_SelectionTools)
     del Scene.long_string
 

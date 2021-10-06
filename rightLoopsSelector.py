@@ -1,4 +1,3 @@
-
 from bpy.props import StringProperty
 from bmesh.types import BMElemSeq, BMEdgeSeq, BMFaceSeq, BMVertSeq
 from bmesh.types import BMVert, BMEdge, BMFace, BMesh, BMLoop
@@ -24,8 +23,8 @@ print(getcwd())
 from facesSelectionManager import FacesSelectionManager as FSManager
 
 T:TypeVar = TypeVar('T', BMEdge, BMLoop, Generator)
-class EdgesSurroundingSelector(Operator):
-    bl_idname: str = 'surrounding.selector';
+class RightLoopsSelector(Operator):
+    bl_idname: str = 'rightloops.selector';
     bl_label: str = 'surrounding faces selector';
     bl_options: Set[str] = {'REGISTER', 'UNDO'};
     bm: BMesh;
@@ -37,7 +36,7 @@ class EdgesSurroundingSelector(Operator):
         self._EDGEs = list()
         self._VERTEx = list()
         self._FSM = FSManager()
-    def __collectSelectedEdge(self)->List[BMVert]:
+    def __collectSelectedEdge(self)->None:#List[BMVert]:
         vertices:BMElemSeq;
         length: int
         if (self.obj.mode == 'EDIT'):
@@ -47,27 +46,14 @@ class EdgesSurroundingSelector(Operator):
             for i in range(length):
                 if (self.bm.edges[i].select):
                     print('selected EDGES: {}'.format(self.bm.edges[i]))
-                    self._FSM.setLoops(self.bm.edges[i])
-                    vertices = self.bm.edges[i].verts
-                    for j in range(len(vertices)):
-                        self._VERTEx.append(vertices[j])
+                    self._FSM.setLoops(self.bm.edges[i], left=False)
+                    # vertices = self.bm.edges[i].verts
+                    # for j in range(len(vertices)):
+                    #     self._VERTEx.append(vertices[j])
         else:
             print("Object is not in edit mode.")
-        return self._VERTEx
-    def linkedLoops(self)->List[BMLoop]:
-        # first_edge:BMEdge = vertex.link_edges[0]
-        vertices: List[BMElemSeq] = list(self.__collectSelectedEdge())
-        print("VERTICES:", vertices)
-        first_loop: BMLoop;
-        loop: T;
-        loopsList: Set[BMLoop] = set()
-        for i in range(len(vertices)):
-            vertices[i].link_edges.index_update()
-            loop = vertices[i].link_loops
-            for j in range(len(loop)):
-                loopsList.add(loop[j])
-        return list(loopsList)
-    def linkedLoopsTop(self)->List[BMLoop]:
+        # return self._VERTEx
+    def linkedLoopsBottom(self)->List[BMLoop]:
         self.__collectSelectedEdge()
         self._FSM.recoverNextLoop()
         return self._FSM.getLoops()
@@ -106,32 +92,3 @@ class EdgesSurroundingSelector(Operator):
         except Exception as e:
             self.report({'ERROR'}, e.args)
             return {'CANCELLED'}
-
-
-class PANEL_PT_SelectionTools(Panel):
-    bl_idname: str = 'PANEL_PT_SelectionTools'
-    bl_label: str = 'Selection_Tools'
-    bl_space_type: str = 'VIEW_3D'
-    bl_region_type: str = 'UI'
-    bl_category: str = 'Panel Selection Tools'
-
-    def draw(self, context) -> None:
-        row_action_1_btn = self.layout.row()
-        row_action_1_btn.operator('surrounding.selector', icon='WORLD_DATA', text='Run Path Search')
-
-        # Text area
-        row_text = self.layout.row()
-        text = context.scene.long_string
-        row_text.label(text=text, icon='WORLD_DATA')
-
-def register() -> None:
-    register_class(EdgesSurroundingSelector)
-    register_class(PANEL_PT_SelectionTools)
-    bpy.types.Scene.long_string = StringProperty(name='long_string', default='')
-
-def unregister() -> None:
-    unregister_class(EdgesSurroundingSelector)
-    unregister_class(PANEL_PT_SelectionTools)
-    del bpy.types.Scene.long_string
-if __name__ == "__main__":
-    register();
