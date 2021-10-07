@@ -1,4 +1,4 @@
-from bpy.props import StringProperty
+from logging import basicConfig, INFO, info
 from bmesh.types import BMElemSeq, BMEdgeSeq, BMFaceSeq, BMVertSeq
 from bmesh.types import BMVert, BMEdge, BMFace, BMesh, BMLoop
 from bpy import context, data
@@ -21,7 +21,7 @@ if(path !=dir):
         pass
 print(getcwd())
 from facesSelectionManager import FacesSelectionManager as FSManager
-
+basicConfig(filename='loops.log',level=INFO)
 T:TypeVar = TypeVar('T', BMEdge, BMLoop, Generator)
 class RightLoopsSelector(Operator):
     bl_idname: str = 'rightloops.selector';
@@ -39,13 +39,16 @@ class RightLoopsSelector(Operator):
     def __collectSelectedEdge(self)->None:#List[BMVert]:
         vertices:BMElemSeq;
         length: int
+
         if (self.obj.mode == 'EDIT'):
             self.bm = from_edit_mesh(self.obj.data)
             length = len(self.bm.edges)
             print(self.bm.edges)
+            j:int =0;
             for i in range(length):
                 if (self.bm.edges[i].select):
-                    print('selected EDGES: {}'.format(self.bm.edges[i]))
+                    info('index: {}, selected EDGES: {}'.format(j, self.bm.edges[i]))
+                    j+=1;
                     self._FSM.setLoops(self.bm.edges[i], left=False)
                     # vertices = self.bm.edges[i].verts
                     # for j in range(len(vertices)):
@@ -55,11 +58,11 @@ class RightLoopsSelector(Operator):
         # return self._VERTEx
     def linkedLoopsBottom(self)->List[BMLoop]:
         self.__collectSelectedEdge()
-        self._FSM.recoverNextLoop()
+        self._FSM.recoverNextLoopRight()
         return self._FSM.getLoops()
     def __loopsToFace(self)->List[BMFace]:
         faces:List[BMFace]=list()
-        loops:List[BMLoop] = self.linkedLoopsTop()
+        loops:List[BMLoop] = self.linkedLoopsBottom()
         for i in range(len(loops)):
             faces.append(loops[i].face)
         return faces

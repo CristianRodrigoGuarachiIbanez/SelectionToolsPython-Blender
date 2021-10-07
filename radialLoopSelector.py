@@ -1,10 +1,7 @@
 
-from bmesh.types import BMElemSeq, BMEdgeSeq, BMFaceSeq, BMVertSeq
+
 from bmesh.types import BMVert, BMEdge, BMFace, BMesh, BMLoop
-from bpy import context
-from bpy.types import Object, Operator, Panel, ID
-from bmesh import from_edit_mesh, update_edit_mesh
-from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, DefaultDict, Reversible
+
 
 class RadialLoopSelector(object):
     _loop:BMLoop;
