@@ -19,7 +19,6 @@ class FacesSelectionManager(object):
             info('length: {}, ITEMS: {}'.format(len(self._listOfLoops), RLM.rightLoop()))
         else:
             self._listOfLoops.append(RLM.leftLoop())
-
     def nextLoopFromList(self, index:int)->BMLoop:
         return self._listOfLoops[index].link_loop_next
     @staticmethod

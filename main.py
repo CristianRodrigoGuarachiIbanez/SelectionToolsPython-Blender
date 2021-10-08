@@ -7,9 +7,8 @@ from typing import List, Dict
 from os.path import dirname, basename, splitext
 from os import chdir,getcwd
 from bpy.types import Scene
-
 import sys
-# reload(splitext(basename(__file__))[0])
+
 path:str = r"C:\Users\Image Instruments\PycharmProjects/SelectionToolsPython-Blender"
 dir: str = dirname(data.filepath)
 if(path !=dir):
@@ -19,11 +18,12 @@ if(path !=dir):
     else:
         pass
 print(getcwd())
-from selectionModeManager import SelectionManager
+from faceAnglePathSelectionManager import FacesAnglePathSelectionManager
+from lengthEdgePathSelectionManager import LengthEdgePathSelectionManager
 from panelSelectionTools import PANEL_PT_SelectionTools
 from leftLoopsSelector import LeftLoopsSelector
 from rightLoopsSelector import RightLoopsSelector
-import leftLoopsSelector, panelSelectionTools, selectionModeManager
+import leftLoopsSelector, panelSelectionTools, faceAnglePathSelectionManager
 
 bl_info: Dict[str, str] = {
     "name": "Textbox",
@@ -36,19 +36,21 @@ bl_info: Dict[str, str] = {
 }
 def register() -> None:
     try:
-        register_class(SelectionManager)
+        register_class(FacesAnglePathSelectionManager)
+        register_class(LengthEdgePathSelectionManager)
         register_class(LeftLoopsSelector)
         register_class(RightLoopsSelector)
         register_class(PANEL_PT_SelectionTools)
     except ValueError or RuntimeError:
         reload(leftLoopsSelector)
-        reload(selectionModeManager)
+        reload(faceAnglePathSelectionManager)
         reload(panelSelectionTools)
 
     Scene.long_string = StringProperty(name='long_string', default='')
 
 def unregister() -> None:
-    unregister_class(SelectionManager)
+    unregister_class(FacesAnglePathSelectionManager)
+    unregister_class(LengthEdgePathSelectionManager)
     unregister_class(RightLoopsSelector)
     unregister_class(LeftLoopsSelector)
     unregister_class(PANEL_PT_SelectionTools)

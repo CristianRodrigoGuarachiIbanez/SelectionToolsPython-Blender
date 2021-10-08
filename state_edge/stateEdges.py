@@ -100,6 +100,11 @@ class StateEdge(State):
             vertices = [vert for vert in action.action.verts]
             return vertices.pop(0) # ------- > ändere das was hier zurückgeliefert wird
     def createChildrenEdges(self, scoreAngle:bool=False) ->None:
+        """
+        loop over the linked edges, transform all BMEdges into StateEdges Object. Per Defect, it will be calculated the distance-score (length).
+        :param scoreAngle: boolean value to specify which score to use
+        :return: None
+        """
         i:int;
         j:int;
         nextEdges = self.node.link_edges  # recover the linked EDGES
@@ -111,8 +116,10 @@ class StateEdge(State):
                 continue;
             stateEdge = StateEdge(self, nextEdges[j]);
             if(scoreAngle is True):
+                print("[INFO]: angle score will be used!")
                 stateEdge.score=self.__getDistanceBetweenEdges(self.__calcEdgeAngle(self.__checkGoalDefinition()), self.__calcEdgeAngle(nextEdges[j]))
             else:
+                print("[INFO]: length score will be used!")
                 stateEdge.score = self.__getDistanceBetweenEdges(self.__checkGoalDefinition().calc_length(), nextEdges[j].calc_length())
             print('SCORE:', stateEdge.score)
             self.children.append(stateEdge);

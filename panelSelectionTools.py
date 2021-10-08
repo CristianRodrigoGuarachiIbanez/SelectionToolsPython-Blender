@@ -10,12 +10,16 @@ class PANEL_PT_SelectionTools(Panel):
 
     def draw(self, context) -> None:
         row_action_1_btn = self.layout.row()
-        row_action_1_btn.operator('selection.manager', icon='WORLD_DATA', text='Run Select Tool')
+        row_action_1_btn.operator('lengthscore.selectionmanager', icon='WORLD_DATA', text='Select Edge Length Path')
+
+        row_action_btn = self.layout.row();
+        row_action_btn.operator('anglescore.selectionmanager', icon='WORLD_DATA', text='Select Faces Angle Path')
 
         # Text area
         row_text = self.layout.row()
         text = context.scene.long_string
         row_text.label(text=text, icon='WORLD_DATA')
+
         # -------- second button
         row_action_2_btn = self.layout.row()
         row_action_2_btn.operator('leftloops.selector', text='Top Faces Selection')
