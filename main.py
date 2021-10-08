@@ -18,12 +18,15 @@ if(path !=dir):
     else:
         pass
 print(getcwd())
-from faceAnglePathSelectionManager import FacesAnglePathSelectionManager
-from lengthEdgePathSelectionManager import LengthEdgePathSelectionManager
+from selectionManager.faceAnglePathSelectionManager import FacesAnglePathSelectionManager
+from selectionManager.lengthEdgePathSelectionManager import LengthEdgePathSelectionManager
 from panelSelectionTools import PANEL_PT_SelectionTools
-from leftLoopsSelector import LeftLoopsSelector
-from rightLoopsSelector import RightLoopsSelector
-import leftLoopsSelector, panelSelectionTools, faceAnglePathSelectionManager
+from loopSelector.leftLoopsSelector import LeftLoopsSelector
+from loopSelector.rightLoopsSelector import RightLoopsSelector
+from loopSelector import leftLoopsSelector, rightLoopsSelector
+from selectionManager import faceAnglePathSelectionManager, lengthEdgePathSelectionManager
+import panelSelectionTools
+
 
 bl_info: Dict[str, str] = {
     "name": "Textbox",

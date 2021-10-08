@@ -7,7 +7,7 @@ from bmesh import from_edit_mesh, update_edit_mesh
 from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, DefaultDict, Reversible
 from queue import PriorityQueue
 from state_edge.stateEdges import StateEdge
-
+"""https://stackoverflow.com/questions/5834014/lf-will-be-replaced-by-crlf-in-git-what-is-that-and-is-it-important """
 def overrides(interface_class:object)->Callable:
     def overrider(method:Callable)->Callable:
         classMethod:str = '_FacesAnglePathSelectionManager' + method.__name__

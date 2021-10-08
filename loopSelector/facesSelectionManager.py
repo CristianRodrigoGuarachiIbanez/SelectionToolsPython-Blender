@@ -4,6 +4,7 @@ from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, De
 from radialLoopSelector import RadialLoopSelector as RLSelector
 from logging import basicConfig, info, INFO
 basicConfig(filename='loops.log',level=INFO)
+
 class FacesSelectionManager(object):
     _lisfOfLoops:List[RLSelector]
     def __init__(self)->None:
