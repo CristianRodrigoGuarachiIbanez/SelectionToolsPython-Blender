@@ -12,7 +12,7 @@ Hierbei werden ähnliche Kanten gesucht, die die gleichen ausgewählten Paramete
 
 Die Modulen **"FacesAnglePathSelectionManager"** und **"LengthEdgePathSelectionManager"** sind prinzipiell Implementierungen von Operator(bpy_struct), wobei das Object 'StateEdges' mit den BMEdge-Elemente instanziiert wird. 
 In beiden Klassen werden die StateEdge-Objekte in eine Priority Queue gespeichert, da diese aufgrund ihrer Eigenschaften (z.B. Winkel oder Länge) die miteinander vergleichen werden können. Dies findet in der Klassenmethode *__constructEdgePath* statt, welche in der execute Methode aufgerufen und an Blender weitergegeben wird.
-
+Diese Klassenmethode liefert eine Liste der selektierte BMEdges zurück
 
 ```python
 
@@ -79,6 +79,11 @@ class LengthEdgePathSelectionManager(Operator):
             self.__randListe(state);
             start+=1;
         return actions
+```
+Die Aktivierung und Selektion der BMMesh Elemente (BMEdges) werden hier durch die Klassenmethode *__activateEdgesEDITMODE* implementiert. Hierdurch werden die aktivierte BMEdges selektiert und im EDIT MODE veranschaulicht. 
+
+```python
+
     def __activateEdgesEDITMODE(self,EDGES:List[List[BMEdge]]) -> None:
         i:int;
         currEdge:BMEdge;
@@ -88,7 +93,10 @@ class LengthEdgePathSelectionManager(Operator):
             self.__bm.select_history.clear();
             self.__bm.select_history.add(currEdge);
         update_edit_mesh(self.__obj.data)
-        
+```
+
+
+```python
     def execute(self, context) -> Set[str]:
         actions:List[List[BMEdge]];
         self.__selectedEdges.clear()
@@ -104,4 +112,3 @@ class LengthEdgePathSelectionManager(Operator):
             return {'CANCELLED'}
 ```
 
-Die Aktivierung und Selektion der BMMesh Elemente (BMEdges) werden hier durch die Klassenmethode *__activateEdgesEDITMODE* implementiert. Hierdurch werden die aktivierte BMEdges selektiert und im EDIT MODE veranschaulicht. 
