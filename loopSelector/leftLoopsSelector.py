@@ -12,7 +12,7 @@ from os import getcwd, chdir
 from os.path import dirname
 import sys
 # reload(splitext(basename(__file__))[0])
-path:str = r"C:\Users\Image Instruments\PycharmProjects/SelectionToolsPython-Blender"
+path:str = r"C:\Users\Image Instruments\PycharmProjects\SelectionToolsPython-Blender"
 dir: str = dirname(data.filepath)
 if(path !=dir):
     chdir(path)
@@ -21,7 +21,7 @@ if(path !=dir):
     else:
         pass
 print(getcwd())
-from facesSelectionManager import FacesSelectionManager as FSManager
+from .facesSelectionManager import FacesSelectionManager as FSManager
 
 T:TypeVar = TypeVar('T', BMEdge, BMLoop, Generator)
 class LeftLoopsSelector(Operator):

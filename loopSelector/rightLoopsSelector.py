@@ -20,7 +20,7 @@ if(path !=dir):
     else:
         pass
 print(getcwd())
-from facesSelectionManager import FacesSelectionManager as FSManager
+from .facesSelectionManager import FacesSelectionManager as FSManager
 basicConfig(filename='loops.log',level=INFO)
 T:TypeVar = TypeVar('T', BMEdge, BMLoop, Generator)
 class RightLoopsSelector(Operator):

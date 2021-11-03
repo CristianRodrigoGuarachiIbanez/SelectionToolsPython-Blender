@@ -56,3 +56,53 @@ for face in bm.faces:
         vert = loop.vert
         print("Loop Vert: (%f,%f,%f)" % vert.co[:])
 ```
+##  korrekter Zustand
+Beim Modellieren in Blender werden bestimmte Annahmen über den Zustand des Meshes getroffen:
+
+- Verdeckte Geometrie ist nicht selektiert.
+
+- Wenn eine Kante selektiert ist, sind auch ihre Vertices selektiert.
+
+- Wenn eine Fläche selektiert ist, sind ihre Kanten und Vertices selektiert.
+
+- Doppelte Kanten/Flächen gibt es nicht.
+
+- Flächen haben mindestens drei Scheitelpunkte.
+
+ Diese Konventionen werden nicht erzwungen, dennoch müssen die Werkzeuge das Netz in einem gültigen Zustand belassen, da sich sonst andere Werkzeuge falsch verhalten könnten. Jeder Fehler, der sich aus der Nichtbeachtung dieser Konventionen ergibt, wird als Fehler im Skript betrachtet, nicht als Fehler in Blender.
+
+## Selektion aktivierter BMesh-Datensequenzen
+###Auswahl / Flushing
+Wie bereits erwähnt, ist es möglich, einen ungültigen Auswahlzustand zu erzeugen (z. B. indem man einen Zustand auswählt und dann die Auswahl eines seiner Vertices aufhebt); die beste Lösung ist, die Auswahl nach einer Reihe von Bearbeitungen zu löschen. Dadurch wird der Auswahlstatus validiert.
+
+
+## BMesh Types (bmesh.types)
+### Base Mesh Type
+Für mehrere Informationen sieht die [Dokumentation](https://docs.blender.org/api/current/bmesh.types.html#base-mesh-type)
+- Hier wurden explizit die Mesh-Elemente für Vertices, Kanten und Faces importiert, sodass sie eine Liste damit definiert werden können. Im Beispiel werden jedoch nur die Kanten in der Liste gespeichert, nachdem sie als selektierte Elemente erkannt worden sind.
+```python
+from bmesh.types import BMVert, BMEdge, BMesh
+from bmesh import from_edit_mesh, update_edit_mesh
+from bpy import context
+from bpy.types import Object, Panel
+from typing import List
+obj: Object = context.object;
+selectedEdges:List[BMEdge] = list()
+selectedVertex:List[BMVert] =list()
+bm: BMesh
+length: int
+if (obj.mode == 'EDIT'):
+    bm = from_edit_mesh(obj.data)
+    length = len(bm.edges)
+    for i in range(length):
+        if (bm.edges[i].select):
+            selectedEdges.append(bm.edges[i])
+            vertices = bm.edges[i].verts
+            for j in range(len(vertices)):
+                selectedVertex.append(vertices[j])
+else:
+    print("Object is not in edit mode.")
+```
+
+###Mesh Elemente
+[Dokumentation](https://docs.blender.org/api/current/bmesh.types.html#base-mesh-type)

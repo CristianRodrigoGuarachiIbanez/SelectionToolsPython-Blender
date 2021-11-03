@@ -9,7 +9,7 @@ from os import chdir,getcwd
 from bpy.types import Scene
 import sys
 
-path:str = r"C:\Users\Image Instruments\PycharmProjects/SelectionToolsPython-Blender"
+path:str = r"C:\Users\Image Instruments\PycharmProjects\SelectionToolsPython-Blender"
 dir: str = dirname(data.filepath)
 if(path !=dir):
     chdir(path)

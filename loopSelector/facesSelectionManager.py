@@ -1,7 +1,7 @@
 
 from bmesh.types import BMVert, BMEdge, BMFace, BMesh, BMLoop
 from typing import List, Tuple, Dict, Any, TypeVar, Generator, Callable, Set, DefaultDict, Reversible
-from radialLoopSelector import RadialLoopSelector as RLSelector
+from .radialLoopSelector import RadialLoopSelector as RLSelector
 from logging import basicConfig, info, INFO
 basicConfig(filename='loops.log',level=INFO)
 
