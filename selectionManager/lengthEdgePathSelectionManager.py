@@ -88,19 +88,18 @@ class LengthEdgePathSelectionManager(Operator):
         action: StateEdge = stateValue.parent;
         if (action is not None): parents.append(action.action);
         i: int = 0
-        while (True):
+        while(True):
             if (action.parent is None):
                 break
             try:
                 action = action.parent
-                #print('index:{}, action:{}'.format(i, action))
                 parents.append(action.action)
             except Exception as e:
                 print('[Exception] :', e)
             i += 1
         return parents
     def __constructEdgePath(self) -> List[BMEdge]:
-        start: int = 0;
+        # start: int = 0;
         visited: List[int] = self.__excludeDuplicates() # list of edge indices [False] * len(self.__selectedEdges)
         nextEdge:BMEdge;
         parentNode:bool;
@@ -116,7 +115,6 @@ class LengthEdgePathSelectionManager(Operator):
         while(True): # endlose Schleife
             # ------ look for the next edge and save in SELECTED EDGES
             nextEdge = self.__priorityQueue.get()
-            #print('PRIORITY QUEUED EDGE{}, VERTEX{}'.format(nextEdge.action,nextEdge.node))
             assert (nextEdge is not None), 'there is none new selected edge'
             if(nextEdge.action == state.goal):
                 visited.append(nextEdge.action.index);
@@ -127,10 +125,9 @@ class LengthEdgePathSelectionManager(Operator):
                 actions.append(self.__extractStatesParents(state))
                 break;
             elif(nextEdge.action.index not in visited):
-                start+=1;
+                # start+=1;
                 visited.append(nextEdge.action.index);
                 self.__selectedEdges.append(nextEdge.action)
-                # print('a new EDGE {} was selected and added into SELECTED EDGES!'.format(nextEdge.action));
             elif(nextEdge.action.index in visited):
                 continue
             # -------- check if parent node in current edge
@@ -148,8 +145,7 @@ class LengthEdgePathSelectionManager(Operator):
             state.createChildrenEdges(scoreAngle=True);
             # -------- save the status in EXTENDED NODES
             self.__randListe(state);
-            # print('a new OBJECT CLASS STATUS was added into the list of EXTENDED NODES!');
-            start+=1;
+            # start+=1;
         return actions
     def __activateEdgesEDITMODE(self,EDGES:List[List[BMEdge]]) -> None:
         i:int;

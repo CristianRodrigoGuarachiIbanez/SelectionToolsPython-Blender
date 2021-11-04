@@ -30,10 +30,12 @@ class LengthEdgePathSelectionManager(Operator):
     bl_label: str = 'show searching path based on edge length';
     bl_options: Set[str] = {'REGISTER', 'UNDO'};
     ... 
-    
+ ```
+Da es sich um eine Klasse handelt, die von dem Operator vererbt und durch Blender zugegriffen wird, werden bestimmte Identifikationseigenschaften zugeschrieben. **"bl_idname"** ist der Name des Objekts mit dem die Klasse in Blender registriert und ausgeführt wird. 
+bl_label ist der String mit dem die Klasse beschrieben wird.
+```python
     def __constructEdgePath(self) -> List[BMEdge]:
-        start: int = 0;
-        visited: List[int] = self.__excludeDuplicates() # list of edge indices [False] * len(self.__selectedEdges)
+        visited: List[int] = self.__excludeDuplicates() 
         nextEdge:BMEdge;
         parentNode:bool;
         actions:List[BMEdge]=list();
@@ -77,10 +79,13 @@ class LengthEdgePathSelectionManager(Operator):
             state.createChildrenEdges(scoreAngle=True);
             # -------- save the status in EXTENDED NODES
             self.__randListe(state);
-            start+=1;
         return actions
 ```
-Die Aktivierung und Selektion der BMMesh Elemente (BMEdges) werden hier durch die Klassenmethode *__activateEdgesEDITMODE* implementiert. Hierdurch werden die aktivierte BMEdges selektiert und im EDIT MODE veranschaulicht. 
+Um den Suchbaum zu konstruieren, werden erstmal aus den selektierten MBEdges Duplikaten ausgelassen, die mit selektiert werden konnten. 
+Als erster Schritt werden die BMEdges als States definiert und somit initialisiert. Für jeden Schritt wird ein BMEdge aus einer Menge von aktiven BMEdges selektiert, die das genutzte Kriterium (bspw. gleiche Länge bzw. Winkel) erfüllt ([siehe](state_edges.md) Klassenmethode *calculateTheScore*). 
+Ausgehend von der selektierten Kante (BMEdge) werden wiederum alle verbundenen Kanten betrachtet (siehe [Expandieren](https://de.wikipedia.org/wiki/A*-Algorithmus)). Das geschieht hier anhand der Klassenmethode *createChildrenEdges* der Klasse **StateEdges**.
+Die Randliste des Suchbaums wird als eine Priority Queue gespeichert, sodass sich die niedrigsten Werte vorne befinden. 
+Diese Suchstrategie wird so lang durchgeführt bis man bei der weider Ausgangskante ankommt. In diesem Suchalgorithmus ist die Ausgangskante gleich zu dem Zielkante. 
 
 ```python
 
@@ -94,7 +99,8 @@ Die Aktivierung und Selektion der BMMesh Elemente (BMEdges) werden hier durch di
             self.__bm.select_history.add(currEdge);
         update_edit_mesh(self.__obj.data)
 ```
-
+Die Aktivierung und Selektion der BMMesh Elemente (BMEdges) werden hier durch die Klassenmethode *__activateEdgesEDITMODE* implementiert. Hierdurch werden die aktivierte BMEdges selektiert und im EDIT MODE veranschaulicht. 
+Hier wird durch den aus *__constructEdgePath* resultierenden Suchpfad iteriert, um alle bereits selektierte BMEdges zu aktivieren, sodass sie in EDIT MODE sichtbar gemacht werden können. Dafür greift man in den Verlauf der Selektion von BMesh-Elemente zu und packt die jede Kante aus dem Suchpfad mit ein. 
 
 ```python
     def execute(self, context) -> Set[str]:
